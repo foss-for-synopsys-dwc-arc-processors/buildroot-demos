@@ -1,6 +1,6 @@
 #!/bin/sh
 if [ $# -lt 1 ]; then
-    echo "Usage: set_wifi_connection <name> [<password>]"
+    echo "Usage: $0  <name> [<password>]"
     echo "<Name> and <password> are correspond to wifi access point"
     echo "no value in  <password> setup unsecured wireless connection"
     exit 1

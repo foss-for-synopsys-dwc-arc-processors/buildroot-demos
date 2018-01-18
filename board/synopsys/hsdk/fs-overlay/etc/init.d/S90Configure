@@ -2,12 +2,16 @@
 
 case "$1" in
   start)
-    echo "Starting kmscube..."
-    MESA_LOADER_DRIVER_OVERRIDE=imx-drm /usr/bin/kmscube --device /dev/dri/card1
+    echo "Changing system settings..."
+    date -s 2018.01.01-00:00
+    echo "Chaning user password"
+    echo -e "testhsdkssh42\ntesthsdkssh42" | passwd hsdk-user
+    sleep 1
+    udhcpc
+    sleep 1
     ;;
   stop)
     echo -n "..."
-    killall kmscube
     ;;
   restart|reload)
     "$0" stop

@@ -1,0 +1,1 @@
+hsdk-user -1 hsdk-group -1 synopsys-hsdk /home/hsdk /bin/sh hsdk-group hsdk-user

@@ -7,7 +7,7 @@ case "$1" in
     echo "Chaning user password"
     echo -e "testhsdkssh42\ntesthsdkssh42" | passwd hsdk-user
     sleep 1
-    udhcpc
+    udhcpc -n -t 3
     sleep 1
     ;;
   stop)

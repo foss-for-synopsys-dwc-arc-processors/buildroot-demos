@@ -1,0 +1,22 @@
+#/bin/sh
+
+case "$1" in
+  start)
+    echo "Changing system settings..."
+    date -s 2018.01.01-00:00
+    echo "Chaning user password"
+    echo -e "testhsdkssh42\ntesthsdkssh42" | passwd hsdk-user
+    ;;
+  stop)
+    echo -n "..."
+    ;;
+  restart|reload)
+    "$0" stop
+    "$0" start
+    ;;
+  *)
+    echo $"Usage: $0 {start|stop|restart}"
+    exit 1
+esac
+
+exit $?

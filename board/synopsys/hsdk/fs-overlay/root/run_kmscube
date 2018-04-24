@@ -1,0 +1,27 @@
+#!/bin/sh
+# start stop hotspot
+
+start() {
+	echo "Starting kmscube"
+	MESA_LOADER_DRIVER_OVERRIDE=imx-drm /usr/bin/kmscube --device /dev/dri/card1
+}
+
+stop() {
+	echo "Stopping kmscube"	
+	killall kmscube
+	echo "OK"
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  *)
+	echo "Usage: $0 {start|stop}"
+	exit 1
+
+esac
+exit $?

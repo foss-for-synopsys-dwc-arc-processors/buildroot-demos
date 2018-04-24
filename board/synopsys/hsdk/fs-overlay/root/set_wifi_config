@@ -1,0 +1,20 @@
+#!/bin/sh
+if [ $# -lt 1 ]; then
+    echo "Usage: $0  <name> [<password>]"
+    echo "<Name> and <password> are correspond to wifi access point"
+    echo "no value in  <password> setup unsecured wireless connection"
+    exit 1
+fi
+
+conf_path=/etc/wpa_supplicant.conf
+echo "Set Ssid as $1"
+sed -i "s/ssid=\".*\"/ssid=\"${1}\"/" "$conf_path"
+if [ -z $2 ]; then
+    echo "Set unsecured wifi network"
+    sed -i "s/psk=\".*\"/key_mgmt=NONE/" "$conf_path"
+else
+    echo "Set passwd as $2"
+    sed -i "s/psk=\".*\"/psk=\"${2}\"/"  "$conf_path"
+    sed -i "s/key_mgmt=NONE/psk=\"${2}\"/"  "$conf_path"
+fi 
+

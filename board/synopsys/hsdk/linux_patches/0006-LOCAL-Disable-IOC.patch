@@ -1,0 +1,31 @@
+From 1bbf9d603cf0c196ac4db4dfb7ef729f28089f7d Mon Sep 17 00:00:00 2001
+From: Alexey Brodkin <abrodkin@synopsys.com>
+Date: Fri, 8 Sep 2017 22:11:27 +0300
+Subject: [PATCH v100500 6/9] LOCAL: Disable IOC
+
+IOC is disabled for the GPU in HSDK which means we need to move
+GPU's DMA buffers outside of IOC aperture.
+
+For bring-up we just disable IOC alltogether for now.
+
+Signed-off-by: Alexey Brodkin <abrodkin@synopsys.com>
+---
+ arch/arc/mm/cache.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arc/mm/cache.c b/arch/arc/mm/cache.c
+index 2072f3451e9c..1a7e24e66c59 100644
+--- a/arch/arc/mm/cache.c
++++ b/arch/arc/mm/cache.c
+@@ -27,7 +27,7 @@
+ 
+ static int l2_line_sz;
+ static int ioc_exists;
+-int slc_enable = 1, ioc_enable = 1;
++int slc_enable = 1, ioc_enable = 0;
+ unsigned long perip_base = ARC_UNCACHED_ADDR_SPACE; /* legacy value for boot */
+ unsigned long perip_end = 0xFFFFFFFF; /* legacy value */
+ 
+-- 
+2.14.3
+

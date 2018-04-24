@@ -1,0 +1,59 @@
+From 826e7da1b3b8e7dfa58cf1f0be7d7738f0a8526c Mon Sep 17 00:00:00 2001
+From: Alexey Brodkin <abrodkin@synopsys.com>
+Date: Tue, 12 Dec 2017 21:38:42 +0300
+Subject: [PATCH v100500 7/9] LOCAL: Enable DMA CMA
+
+Signed-off-by: Alexey Brodkin <abrodkin@synopsys.com>
+---
+ arch/arc/Kconfig            | 1 +
+ arch/arc/include/asm/Kbuild | 1 +
+ arch/arc/mm/init.c          | 2 ++
+ 3 files changed, 4 insertions(+)
+
+diff --git a/arch/arc/Kconfig b/arch/arc/Kconfig
+index d76bf4a83740..28207678d587 100644
+--- a/arch/arc/Kconfig
++++ b/arch/arc/Kconfig
+@@ -44,6 +44,7 @@ config ARC
+ 	select HAVE_GENERIC_DMA_COHERENT
+ 	select HAVE_KERNEL_GZIP
+ 	select HAVE_KERNEL_LZMA
++	select HAVE_DMA_CONTIGUOUS
+ 
+ config MIGHT_HAVE_PCI
+ 	bool
+diff --git a/arch/arc/include/asm/Kbuild b/arch/arc/include/asm/Kbuild
+index 4bd5d4369e05..6680c9e11119 100644
+--- a/arch/arc/include/asm/Kbuild
++++ b/arch/arc/include/asm/Kbuild
+@@ -2,6 +2,7 @@
+ generic-y += bugs.h
+ generic-y += device.h
+ generic-y += div64.h
++generic-y += dma-contiguous.h
+ generic-y += emergency-restart.h
+ generic-y += extable.h
+ generic-y += fb.h
+diff --git a/arch/arc/mm/init.c b/arch/arc/mm/init.c
+index ba145065c579..63e203269894 100644
+--- a/arch/arc/mm/init.c
++++ b/arch/arc/mm/init.c
+@@ -9,6 +9,7 @@
+ #include <linux/kernel.h>
+ #include <linux/mm.h>
+ #include <linux/bootmem.h>
++#include <linux/dma-contiguous.h>
+ #include <linux/memblock.h>
+ #ifdef CONFIG_BLK_DEV_INITRD
+ #include <linux/initrd.h>
+@@ -145,6 +146,7 @@ void __init setup_arch_memory(void)
+ 		memblock_reserve(__pa(initrd_start), initrd_end - initrd_start);
+ #endif
+ 
++	dma_contiguous_reserve(PFN_PHYS(max_low_pfn));
+ 	early_init_fdt_reserve_self();
+ 	early_init_fdt_scan_reserved_mem();
+ 
+-- 
+2.14.3
+

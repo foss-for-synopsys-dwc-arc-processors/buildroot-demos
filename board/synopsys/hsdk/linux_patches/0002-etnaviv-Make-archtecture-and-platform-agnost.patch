@@ -1,0 +1,30 @@
+From a5e7064155d2cd196776284546cab679d96e2ce3 Mon Sep 17 00:00:00 2001
+From: Alexey Brodkin <abrodkin@synopsys.com>
+Date: Mon, 16 Oct 2017 19:59:54 +0300
+Subject: [PATCH v100500 2/9] etnaviv: Make archtecture- and platform-agnostic
+
+Vivante GPU is just an IP-core that could be built-in any
+random SoC, moreover this driver doesn't really rely on
+any architecture- or platform-specific things so
+let's allow everybody to select it in their defconfigs.
+
+Signed-off-by: Alexey Brodkin <abrodkin@synopsys.com>
+---
+ drivers/gpu/drm/etnaviv/Kconfig | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/etnaviv/Kconfig b/drivers/gpu/drm/etnaviv/Kconfig
+index 3f58b4077767..cee4e5339ced 100644
+--- a/drivers/gpu/drm/etnaviv/Kconfig
++++ b/drivers/gpu/drm/etnaviv/Kconfig
+@@ -2,7 +2,6 @@
+ config DRM_ETNAVIV
+ 	tristate "ETNAVIV (DRM support for Vivante GPU IP cores)"
+ 	depends on DRM
+-	depends on ARCH_MXC || ARCH_DOVE || (ARM && COMPILE_TEST)
+ 	depends on MMU
+ 	select SHMEM
+ 	select SYNC_FILE
+-- 
+2.14.3
+

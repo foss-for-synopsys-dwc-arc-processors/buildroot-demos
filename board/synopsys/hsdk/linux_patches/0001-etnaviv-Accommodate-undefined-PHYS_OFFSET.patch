@@ -1,0 +1,33 @@
+From b89cdf557d41d00b5c4aea272fc31401f9b465d2 Mon Sep 17 00:00:00 2001
+From: Alexey Brodkin <abrodkin@synopsys.com>
+Date: Tue, 5 Dec 2017 12:34:40 +0300
+Subject: [PATCH v100500 1/9] etnaviv: Accommodate undefined PHYS_OFFSET
+
+Signed-off-by: Alexey Brodkin <abrodkin@synopsys.com>
+---
+ drivers/gpu/drm/etnaviv/etnaviv_gpu.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/gpu/drm/etnaviv/etnaviv_gpu.c b/drivers/gpu/drm/etnaviv/etnaviv_gpu.c
+index 21d0d22f1168..a1c518bf6e4b 100644
+--- a/drivers/gpu/drm/etnaviv/etnaviv_gpu.c
++++ b/drivers/gpu/drm/etnaviv/etnaviv_gpu.c
+@@ -674,6 +674,7 @@ int etnaviv_gpu_init(struct etnaviv_gpu *gpu)
+ 		goto fail;
+ 	}
+ 
++#ifdef PHYS_OFFSET
+ 	/*
+ 	 * Set the GPU linear window to be at the end of the DMA window, where
+ 	 * the CMA area is likely to reside. This ensures that we are able to
+@@ -695,6 +696,7 @@ int etnaviv_gpu_init(struct etnaviv_gpu *gpu)
+ 		gpu->memory_base = PHYS_OFFSET;
+ 		gpu->identity.features &= ~chipFeatures_FAST_CLEAR;
+ 	}
++#endif
+ 
+ 	ret = etnaviv_hw_reset(gpu);
+ 	if (ret) {
+-- 
+2.14.3
+

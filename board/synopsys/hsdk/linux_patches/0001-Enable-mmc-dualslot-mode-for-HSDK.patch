@@ -1,0 +1,26 @@
+From d561557f2c68a923ba9bc5d4ff0798e5e029e171 Mon Sep 17 00:00:00 2001
+From: Evgeniy Didin <Evgeniy.Didin@synopsys.com>
+Date: Tue, 24 Apr 2018 10:40:41 +0300
+Subject: [PATCH] Enable mmc dualslot mode for HSDK
+
+Signed-off-by: Evgeniy Didin <Evgeniy.Didin@synopsys.com>
+---
+ arch/arc/boot/dts/hsdk.dts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arc/boot/dts/hsdk.dts b/arch/arc/boot/dts/hsdk.dts
+index 006aa3de5348..5d8c2e844881 100644
+--- a/arch/arc/boot/dts/hsdk.dts
++++ b/arch/arc/boot/dts/hsdk.dts
+@@ -205,7 +205,7 @@
+ 		mmc@a000 {
+ 			compatible = "altr,socfpga-dw-mshc";
+ 			reg = <0xa000 0x400>;
+-			num-slots = <1>;
++			num-slots = <2>;
+ 			fifo-depth = <16>;
+ 			card-detect-delay = <200>;
+ 			clocks = <&mmcclk_biu>, <&mmcclk_ciu>;
+-- 
+2.16.2
+

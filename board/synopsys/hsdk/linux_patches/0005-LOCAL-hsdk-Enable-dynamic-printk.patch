@@ -1,0 +1,38 @@
+From dcdd39f04450b7c66d8ff643de6d5287e8c498c0 Mon Sep 17 00:00:00 2001
+From: Alexey Brodkin <abrodkin@synopsys.com>
+Date: Thu, 14 Dec 2017 16:03:03 +0300
+Subject: [PATCH v100500 5/9] LOCAL: hsdk: Enable dynamic printk
+
+Signed-off-by: Alexey Brodkin <abrodkin@synopsys.com>
+---
+ arch/arc/configs/hsdk_defconfig | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/arch/arc/configs/hsdk_defconfig b/arch/arc/configs/hsdk_defconfig
+index 1445f52bc6b1..b53a2c3914b4 100644
+--- a/arch/arc/configs/hsdk_defconfig
++++ b/arch/arc/configs/hsdk_defconfig
+@@ -9,7 +9,7 @@ CONFIG_NAMESPACES=y
+ # CONFIG_UTS_NS is not set
+ # CONFIG_PID_NS is not set
+ CONFIG_BLK_DEV_INITRD=y
+-CONFIG_INITRAMFS_SOURCE="../../arc_initramfs_hs/"
++CONFIG_INITRAMFS_SOURCE="rootfs.cpio"
+ CONFIG_EMBEDDED=y
+ CONFIG_PERF_EVENTS=y
+ # CONFIG_VM_EVENT_COUNTERS is not set
+@@ -68,9 +68,11 @@ CONFIG_VFAT_FS=y
+ CONFIG_NFS_FS=y
+ CONFIG_NLS_CODEPAGE_437=y
+ CONFIG_NLS_ISO8859_1=y
++CONFIG_DYNAMIC_DEBUG=y
+ # CONFIG_ENABLE_WARN_DEPRECATED is not set
+ # CONFIG_ENABLE_MUST_CHECK is not set
+ CONFIG_STRIP_ASM_SYMS=y
++CONFIG_DEBUG_FS=y
+ CONFIG_SOFTLOCKUP_DETECTOR=y
+ CONFIG_DEFAULT_HUNG_TASK_TIMEOUT=10
+ # CONFIG_SCHED_DEBUG is not set
+-- 
+2.14.3
+

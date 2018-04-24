@@ -1,0 +1,29 @@
+#!/bin/sh
+# start stop hotspot
+
+start() {
+	echo "Starting DOOM"
+	/usr/sbin/fbset > /etc/fb.modes
+    	export SDL_NOMOUSE=1
+	/usr/bin/chocolate-doom &
+}
+
+stop() {
+	echo "Stopping Doom"
+	killall chocolate-doom
+	echo "OK"
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  *)
+	echo "Usage: $0 {start|stop}"
+	exit 1
+
+esac
+exit $?

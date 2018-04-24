@@ -258,4 +258,7 @@ XSERVER_XORG_SERVER_CONF_OPTS += --with-sha1=libsha1
 XSERVER_XORG_SERVER_DEPENDENCIES += libsha1
 endif
 
+ifeq ($(BR2_PACKAGE_XDRIVER_XF86_VIDEO_ARMADA),y)
+XSERVER_XORG_SERVER_CONF_OPTS += --enable-glx
+endif
 $(eval $(autotools-package))

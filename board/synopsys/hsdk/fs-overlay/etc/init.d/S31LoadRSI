@@ -2,14 +2,10 @@
 
 case "$1" in
   start)
-    echo "Changing system settings..."
-    date -s 2018.01.01-00:00
-    echo "Chaning user password"
-    echo -e "testhsdkssh42\ntesthsdkssh42" | passwd hsdk-user
-
-    echo "Editing resolv.conf"  
+    cd /lib/modules/4.16.0/kernel/drivers/net/wireless/rsi/
+    modprobe rsi_sdio.ko
+    cd /root
     sleep 1
-    udhcpc
     ;;
   stop)
     echo -n "..."
@@ -24,3 +20,4 @@ case "$1" in
 esac
 
 exit $?
+

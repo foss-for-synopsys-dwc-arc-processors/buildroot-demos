@@ -1,0 +1,31 @@
+#!/bin/sh
+# start stop hotspot
+
+start() {
+        echo "Starting Xserver"
+        X &
+        export DISPLAY=:0
+        glmark2 &
+}
+
+stop() {
+        echo "Killing glxgears"
+        killall glmark
+        echo "Killing Xserver"
+        killall X
+        echo "OK"
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  *)
+	echo "Usage: $0 {start|stop}"
+	exit 1
+
+esac
+exit $?

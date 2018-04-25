@@ -1,0 +1,49 @@
+From 70d8c1fa65feaf8a01d813c08227d6f7dbc89cfa Mon Sep 17 00:00:00 2001
+From: Alexey Brodkin <abrodkin@synopsys.com>
+Date: Tue, 5 Dec 2017 16:22:31 +0300
+Subject: [PATCH 2/3] arc: [plat-hsdk] Add support for RedPine RS-9113 Wi-Fi/BT
+ module via SDIO
+
+HSDK board among other things sports Wi-Fi/Bluetooth module from
+RedPine. As of today only Wi-Fi part is supported.
+
+Note:
+ 1) The module is connected via SDIO interface and shares it with
+    SD-card slot. They both are supposed to be used via so-called
+    multi-slot support in DW MobileStorage controller.
+ 2) For the module to work it is required to have its firmware blob
+    in "/lib/firmware/rsi" available here:
+    https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/tree/rsi/rs9113_wlan_qspi.rps
+
+Signed-off-by: Alexey Brodkin <abrodkin@synopsys.com>
+---
+ arch/arc/configs/hsdk_defconfig | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/arch/arc/configs/hsdk_defconfig b/arch/arc/configs/hsdk_defconfig
+index 7b8f8faf8a24..30615c9306c4 100644
+--- a/arch/arc/configs/hsdk_defconfig
++++ b/arch/arc/configs/hsdk_defconfig
+@@ -29,6 +29,9 @@ CONFIG_NET=y
+ CONFIG_PACKET=y
+ CONFIG_UNIX=y
+ CONFIG_INET=y
++CONFIG_BRIDGE=y
++CONFIG_CFG80211=y
++CONFIG_MAC80211=y
+ CONFIG_DEVTMPFS=y
+ # CONFIG_STANDALONE is not set
+ # CONFIG_PREVENT_FIRMWARE_BUILD is not set
+@@ -38,6 +41,9 @@ CONFIG_BLK_DEV_SD=y
+ CONFIG_NETDEVICES=y
+ CONFIG_STMMAC_ETH=y
+ CONFIG_MICREL_PHY=y
++CONFIG_RSI_91X=y
++CONFIG_RSI_SDIO=y
++# CONFIG_RSI_USB is not set
+ CONFIG_INPUT_EVDEV=y
+ # CONFIG_INPUT_KEYBOARD is not set
+ # CONFIG_INPUT_MOUSE is not set
+-- 
+2.16.2
+

@@ -1,0 +1,71 @@
+From d199c24e92a6f8ca7bf27e893d5c3723362b5611 Mon Sep 17 00:00:00 2001
+From: Alexey Brodkin <abrodkin@synopsys.com>
+Date: Mon, 21 Aug 2017 15:33:10 +0300
+Subject: [PATCH 1/3] mmc: dw_mmc: Take care about card_number field in CMD
+ register
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+CMD[20:16] or "card_number" bits specify сard number in use, it represents
+physical slot number of card being accessed.
+
+It was a pure luck that default value thee is 0 and so for slot #0
+everything used to work properly. But to use other slots we do need
+to set correct value here.
+
+Signed-off-by: Alexey Brodkin <abrodkin@synopsys.com>
+---
+ drivers/mmc/host/dw_mmc.c | 9 ++++++---
+ drivers/mmc/host/dw_mmc.h | 1 +
+ 2 files changed, 7 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/mmc/host/dw_mmc.c b/drivers/mmc/host/dw_mmc.c
+index 4f2806720c5c..15096a327a4c 100644
+--- a/drivers/mmc/host/dw_mmc.c
++++ b/drivers/mmc/host/dw_mmc.c
+@@ -281,7 +281,8 @@ static void mci_send_cmd(struct dw_mci_slot *slot, u32 cmd, u32 arg)
+ 	mci_writel(host, CMDARG, arg);
+ 	wmb(); /* drain writebuffer */
+ 	dw_mci_wait_while_busy(host, cmd);
+-	mci_writel(host, CMD, SDMMC_CMD_START | cmd);
++	mci_writel(host, CMD, SDMMC_CMD_START | cmd |
++			      (slot->id << SDMMC_CMD_CARD_NUM_OFFSET));
+ 
+ 	if (readl_poll_timeout_atomic(host->regs + SDMMC_CMD, cmd_status,
+ 				      !(cmd_status & SDMMC_CMD_START),
+@@ -446,7 +447,8 @@ static void dw_mci_start_command(struct dw_mci *host,
+ 	wmb(); /* drain writebuffer */
+ 	dw_mci_wait_while_busy(host, cmd_flags);
+ 
+-	mci_writel(host, CMD, cmd_flags | SDMMC_CMD_START);
++	mci_writel(host, CMD, cmd_flags | SDMMC_CMD_START |
++			      (host->slot->id << SDMMC_CMD_CARD_NUM_OFFSET));
+ 
+ 	/* response expected command only */
+ 	if (cmd_flags & SDMMC_CMD_RESP_EXP)
+@@ -1240,7 +1242,8 @@ static void dw_mci_setup_bus(struct dw_mci_slot *slot, bool force_clkinit)
+ 	unsigned int clock = slot->clock;
+ 	u32 div;
+ 	u32 clk_en_a;
+-	u32 sdmmc_cmd_bits = SDMMC_CMD_UPD_CLK | SDMMC_CMD_PRV_DAT_WAIT;
++	u32 sdmmc_cmd_bits = SDMMC_CMD_UPD_CLK | SDMMC_CMD_PRV_DAT_WAIT |
++			     (slot->id << SDMMC_CMD_CARD_NUM_OFFSET);
+ 
+ 	/* We must continue to set bit 28 in CMD until the change is complete */
+ 	if (host->state == STATE_WAITING_CMD11_DONE)
+diff --git a/drivers/mmc/host/dw_mmc.h b/drivers/mmc/host/dw_mmc.h
+index 34474ad731aa..f3b80f1fcda2 100644
+--- a/drivers/mmc/host/dw_mmc.h
++++ b/drivers/mmc/host/dw_mmc.h
+@@ -404,6 +404,7 @@ struct dw_mci_board {
+ #define SDMMC_CMD_RESP_LONG		BIT(7)
+ #define SDMMC_CMD_RESP_EXP		BIT(6)
+ #define SDMMC_CMD_INDX(n)		((n) & 0x1F)
++#define SDMMC_CMD_CARD_NUM_OFFSET	16
+ /* Status register defines */
+ #define SDMMC_GET_FCNT(x)		(((x)>>17) & 0x1FFF)
+ #define SDMMC_STATUS_DMA_REQ		BIT(31)
+-- 
+2.16.2
+

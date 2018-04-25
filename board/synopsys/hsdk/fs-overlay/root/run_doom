@@ -9,9 +9,13 @@ start() {
 }
 
 stop() {
-	echo "Stopping Doom"
-	killall chocolate-doom
-	echo "OK"
+        echo "Stopping Doom"
+        killall chocolate-doom
+        sleep 1
+        killall chocolate-doom
+        sleep 2
+        killall chocolate-doom
+        echo "OK"
 }
 
 case "$1" in

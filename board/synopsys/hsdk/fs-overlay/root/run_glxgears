@@ -2,17 +2,14 @@
 # start stop hotspot
 
 start() {
-        echo "Starting Xserver"
-        X &
+        echo "Starting glxgears"
         export DISPLAY=:0
-        glmark2 &
+        glxgears &
 }
 
 stop() {
         echo "Killing glxgears"
-        killall glmark
-        echo "Killing Xserver"
-        killall X
+        killall glxgears
         echo "OK"
 }
 

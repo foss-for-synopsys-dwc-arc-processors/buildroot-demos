@@ -17,7 +17,7 @@ index 5bcae7649795..737471da16e4 100644
  #include "udl_drv.h"
  
 +/* All hacks and mud stuff --- start */
-+#define DL_DEFIO_WRITE_DELAY    (HZ / 20) /* deferred_io delay in jiffies */
++#define DL_DEFIO_WRITE_DELAY    (HZ / 40) /* deferred_io delay in jiffies */
 +
 +static struct delayed_work deferred_work;
 +static struct drm_device *deferred_dev;

@@ -1,0 +1,54 @@
+Subject: [PATCH] UDL: defio: add fb lock and required checks
+
+Signed-off-by: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+---
+ drivers/gpu/drm/udl/udl_modeset.c | 21 ++++++++++++++++++++-
+ 1 file changed, 20 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/udl/udl_modeset.c b/drivers/gpu/drm/udl/udl_modeset.c
+index 737471da16e4..924d3158124f 100644
+--- a/drivers/gpu/drm/udl/udl_modeset.c
++++ b/drivers/gpu/drm/udl/udl_modeset.c
+@@ -27,12 +27,29 @@ static void pal_modeset_damage(struct drm_device *dev)
+ {
+	struct udl_device *udl = dev->dev_private;
+	struct udl_framebuffer *ufb;
++	struct drm_framebuffer *fb;
+ 
+-	if (!udl->crtc || !udl->crtc->primary->fb)
++	if (atomic_read(&dev->unplugged))
++		pr_warn("  PAL: UDL: dev is dead (unplugged)! %s:%d", __func__, __LINE__);
++
++	if (!udl) {
++	pr_warn("  PAL: UDL: no udl! %s:%d", __func__, __LINE__);
++		return;
++	}
++
++	if (!udl->crtc || !udl->crtc->primary)
+		return;
+ 
++       fb = udl->crtc->primary->fb;
++       if (!fb)
++               return;
++
++       drm_modeset_lock_all(fb->dev);
++
+	ufb = to_udl_fb(udl->crtc->primary->fb);
+	udl_handle_damage(ufb, 0, 0, ufb->base.width, ufb->base.height);
++
++       drm_modeset_unlock_all(fb->dev);
+ }
+ 
+ static void pal_deferred_io_work(struct work_struct *work)
+@@ -44,6 +61,8 @@ static void pal_deferred_io_work(struct work_struct *work)
+ static void pal_deferred_io_cleanup(void)
+ {
+	cancel_delayed_work_sync(&deferred_work);
++
++       pr_info("  PAL: UDL: cancel deferred io! %s:%d", __func__, __LINE__);
+ }
+ 
+ static void pal_deferred_io_init(struct drm_device *dev)
+-- 
+2.14.3
+

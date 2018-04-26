@@ -5,13 +5,31 @@ start() {
         # wpa_supplicant up
         echo "Connecting: "
 	wpa_supplicant -B -i wlan0 -c /etc/wpa_supplicant.conf
+	if [ $? -eq 0 ]
+	then
+		echo "OK"
+	else
+		echo "Error: Unable to start wpa_supplicant" >&2
+	fi
+
 	udhcpc -i wlan0
-        echo "OK"
+        if [ $? -eq 0 ]
+	then
+		echo "OK"
+	else
+		echo "FAIL: Unable to get IP address from access point" >&2
+	fi  
 }
 stop() {
         echo "Stopping hostapd"
         killall wpa_supplicant
-        echo "OK"
+        if [ $? -eq 0 ]
+        then
+                echo "OK"
+        else
+                echo "Error: Unable to stop wpa_supplicant" >&2
+        fi
+
 }
 
 case "$1" in

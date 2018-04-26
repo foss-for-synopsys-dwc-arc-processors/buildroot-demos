@@ -4,6 +4,13 @@
 start() {
 	echo "Starting DOOM"
 	/usr/sbin/fbset > /etc/fb.modes
+        if [ $? -eq 0 ]
+        then
+                echo "fb mode is set"
+        else
+                echo "Error: Unable to set fb mode" >&2
+        fi
+
     	export SDL_NOMOUSE=1
 	/usr/bin/chocolate-doom &
 }
@@ -15,7 +22,13 @@ stop() {
         killall chocolate-doom
         sleep 2
         killall chocolate-doom
-        echo "OK"
+        if [ $? -eq 0 ]
+        then
+                echo "OK"
+        else
+                echo "Error: Unable to stop DOOM" >&2
+        fi
+
 }
 
 case "$1" in

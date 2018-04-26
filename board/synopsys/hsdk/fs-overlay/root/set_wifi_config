@@ -18,3 +18,10 @@ else
     sed -i "s/key_mgmt=NONE/psk=\"${2}\"/"  "$conf_path"
 fi 
 
+if [ $? -eq 0 ]
+then
+    echo "OK"
+else
+    echo "Error: Unable to edit /etc/wpa_supplicant.conf file" >&2
+fi
+

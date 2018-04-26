@@ -7,17 +7,36 @@ start() {
 	iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 	iptables -A FORWARD -i eth0 -o wlan0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 	iptables -A FORWARD -i wlan0 -o eth0 -j ACCEPT
-	sleep 1
+        if [ $? -eq 0 ]
+        then
+                echo "Successfully setup iptables"
+        else
+                echo "Error: Unable to setup iptables" >&2
+        fi
+        sleep 1
+
 	
 	# Start hotspot
 	echo "Start hotspot:"
 	hostapd -B /etc/hostapd.conf
-	echo "OK"
+        if [ $? -eq 0 ]
+        then
+                echo "OK"
+        else
+                echo "Error: Unable to start hostapd" >&2
+        fi
+
 }
 stop() {
 	echo "Stopping hostapd"
 	killall hostapd
-	echo "OK"
+        if [ $? -eq 0 ]
+        then
+                echo "OK"
+        else
+                echo "Error: Unable to kill hostapd" >&2
+        fi
+
 }
 
 case "$1" in

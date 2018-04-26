@@ -2,14 +2,21 @@
 # start stop hotspot
 
 start() {
+	echo "Starting glmark2"
         export DISPLAY=:0
         glmark2 &
 }
 
 stop() {
-        echo "Killing glxgears"
+        echo "Killing glmark2"
         killall glmark2
-        echo "OK"
+        if [ $? -eq 0 ]
+        then
+                echo "OK"
+        else
+                echo "Error: Unable to stop glmark2" >&2
+        fi
+
 }
 
 case "$1" in

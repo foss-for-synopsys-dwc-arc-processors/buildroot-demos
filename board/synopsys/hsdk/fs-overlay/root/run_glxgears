@@ -10,7 +10,13 @@ start() {
 stop() {
         echo "Killing glxgears"
         killall glxgears
-        echo "OK"
+        if [ $? -eq 0 ]
+        then
+                echo "OK"
+        else
+                echo "Error: Unable to stop glxgears" >&2
+        fi
+
 }
 
 case "$1" in

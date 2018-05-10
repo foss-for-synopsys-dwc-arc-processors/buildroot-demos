@@ -1,0 +1,44 @@
+ioq3 1.35 linux-arm Dec 19 2017
+----- FS_Startup -----
+Current search path:
+/root/.q3a/baseq3/pak8.pk3 (9 files)
+/root/.q3a/baseq3/pak7.pk3 (4 files)
+/root/.q3a/baseq3/pak6.pk3 (64 files)
+/root/.q3a/baseq3/pak5.pk3 (7 files)
+/root/.q3a/baseq3/pak4.pk3 (272 files)
+/root/.q3a/baseq3/pak3.pk3 (4 files)
+/root/.q3a/baseq3/pak2.pk3 (148 files)
+/root/.q3a/baseq3/pak1.pk3 (26 files)
+/root/.q3a/baseq3/pak0.pk3 (3466 files)
+/root/.q3a/baseq3
+./baseq3
+
+----------------------
+4000 files in pk3 files
+
+
+**************************************************
+WARNING: pak0.pk3 is present but its checksum (3687328143)
+is not correct. Please re-install the point release
+**************************************************
+
+
+execing default.cfg
+execing q3config.cfg
+couldn't exec autoexec.cfg
+Hunk_Clear: reset the hunk ok
+----- Client Initialization -----
+Couldn't read q3history.
+----- Initializing Renderer ----
+-------------------------------
+QKEY found.
+----- Client Initialization Complete -----
+----- R_Init -----
+SDL_Init( SDL_INIT_VIDEO ) FAILED (Unable to open mouse)
+Setting r_mode -2 failed, falling back on r_mode 3
+SDL_Init( SDL_INIT_VIDEO ) FAILED (Unable to open mouse)
+----- CL_Shutdown -----
+RE_Shutdown( 1 )
+-----------------------
+GLimp_Init() - could not load OpenGL subsystem
+

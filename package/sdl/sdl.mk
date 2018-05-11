@@ -79,6 +79,11 @@ ifeq ($(BR2_PACKAGE_MESA3D),y)
 SDL_DEPENDENCIES += mesa3d
 endif
 
+ifeq ($(BR2_PACKAGE_LIBGLU),y)
+SDL_DEPENDENCIES += libglu
+endif
+
+
 SDL_CONF_OPTS += \
 	--disable-rpath \
 	--enable-pulseaudio=no \

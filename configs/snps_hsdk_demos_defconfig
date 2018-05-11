@@ -27,13 +27,14 @@ BR2_LINUX_KERNEL_PATCH="board/synopsys/hsdk/linux_patches"
 # Filesystem / image
 BR2_TARGET_ROOTFS_EXT2=y
 BR2_TARGET_ROOTFS_EXT2_4=y
-BR2_TARGET_ROOTFS_EXT2_SIZE="350M"
+BR2_TARGET_ROOTFS_EXT2_SIZE="500M"
 # BR2_TARGET_ROOTFS_TAR is not set
 BR2_PACKAGE_HOST_DOSFSTOOLS=y
 BR2_PACKAGE_HOST_GENIMAGE=y
 BR2_PACKAGE_HOST_MTOOLS=y
 BR2_ROOTFS_POST_IMAGE_SCRIPT="support/scripts/genimage.sh"
 BR2_ROOTFS_POST_SCRIPT_ARGS="-c board/synopsys/hsdk/genimage.cfg"
+BR2_ROOTFS_POST_BUILD_SCRIPT="board/synopsys/hsdk/openarena_download.sh"
 
 
 # Bootloader

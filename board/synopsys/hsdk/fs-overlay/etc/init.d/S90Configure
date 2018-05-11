@@ -9,7 +9,7 @@ case "$1" in
 
     echo "Editing resolv.conf"  
     sleep 1
-    udhcpc
+    udhcpc -n
     ;;
   stop)
     echo -n "..."

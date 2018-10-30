@@ -1,12 +1,13 @@
 #!/bin/sh
-#wget -O openarena.zip www.openarena.ws/request.php?4 
+wget -O openarena.zip www.openarena.ws/request.php?4 
 if [ $? -eq 0 ]
         then
                 echo "Openarena files downloaded successfully"
         else
+		echo "ERROR: board/synopsys/hsdk/openarena_download.sh script FAILED"
                 echo "Error: Unable to download openarena zip archive" >&2
 		echo "Manually download archive from www.openarena.ws and place it in buildroot directory"
-		echo "Then run commands in board/synopsys/hsdk/openarena_download.sh below this message" 
+		echo "Then comment 'wget -O openarena.zip www.openarena.ws/request.php?4' line and rerun 'make' "
 		exit 1
         fi
 # Run commands below if you download zip archive manually

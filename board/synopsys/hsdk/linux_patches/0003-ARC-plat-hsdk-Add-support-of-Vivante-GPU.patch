@@ -1,0 +1,66 @@
+From b4ee032fb4d3560af5aeae9ad32cddc53fc9340b Mon Sep 17 00:00:00 2001
+From: Alexey Brodkin <abrodkin@synopsys.com>
+Date: Tue, 5 Dec 2017 13:03:07 +0300
+Subject: [PATCH v100500 3/9] ARC: [plat-hsdk] Add support of Vivante GPU
+
+HSDK board has built-in Vivante GPU which works perfectly fine with
+Etnaviv driver, so let's use it.
+
+Our GPU has both 2D and 3D cores controlled through the same
+set of memory-mapped registers similarly to Marvell Dove.
+
+Signed-off-by: Alexey Brodkin <abrodkin@synopsys.com>
+Cc: Lucas Stach <l.stach@pengutronix.de>
+---
+ arch/arc/boot/dts/hsdk.dts      | 11 +++++++++++
+ arch/arc/configs/hsdk_defconfig |  3 +--
+ 2 files changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arc/boot/dts/hsdk.dts b/arch/arc/boot/dts/hsdk.dts
+index 006aa3de5348..7d75fa182e23 100644
+--- a/arch/arc/boot/dts/hsdk.dts
++++ b/arch/arc/boot/dts/hsdk.dts
+@@ -213,6 +213,17 @@
+ 			interrupts = <12>;
+ 			bus-width = <4>;
+ 		};
++
++		gpu_3d: gpu@90000 {
++			compatible = "vivante,gc";
++			reg = <0x90000 0x4000>;
++			interrupts = <28>;
++		};
++
++		gpu-subsystem {
++			compatible = "fsl,imx-gpu-subsystem";
++			cores = <&gpu_3d>;
++		};
+ 	};
+ 
+ 	memory@80000000 {
+diff --git a/arch/arc/configs/hsdk_defconfig b/arch/arc/configs/hsdk_defconfig
+index 1b54c72f4296..1445f52bc6b1 100644
+--- a/arch/arc/configs/hsdk_defconfig
++++ b/arch/arc/configs/hsdk_defconfig
+@@ -51,6 +51,7 @@ CONFIG_SERIAL_OF_PLATFORM=y
+ CONFIG_DRM=y
+ # CONFIG_DRM_FBDEV_EMULATION is not set
+ CONFIG_DRM_UDL=y
++CONFIG_DRM_ETNAVIV=y
+ CONFIG_FB=y
+ CONFIG_FRAMEBUFFER_CONSOLE=y
+ CONFIG_USB_EHCI_HCD=y
+@@ -62,10 +63,8 @@ CONFIG_MMC=y
+ CONFIG_MMC_SDHCI=y
+ CONFIG_MMC_SDHCI_PLTFM=y
+ CONFIG_MMC_DW=y
+-# CONFIG_IOMMU_SUPPORT is not set
+ CONFIG_EXT3_FS=y
+ CONFIG_VFAT_FS=y
+-CONFIG_TMPFS=y
+ CONFIG_NFS_FS=y
+ CONFIG_NLS_CODEPAGE_437=y
+ CONFIG_NLS_ISO8859_1=y
+-- 
+2.14.3
+

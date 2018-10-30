@@ -263,4 +263,8 @@ define XSERVER_XORG_SERVER_INSTALL_INIT_SYSV
 		$(TARGET_DIR)/etc/init.d/S40xorg
 endef
 
+ifeq ($(BR2_PACKAGE_XDRIVER_XF86_VIDEO_ARMADA),y)
+XSERVER_XORG_SERVER_CONF_OPTS += --enable-glx
+endif
+
 $(eval $(autotools-package))

@@ -1,0 +1,34 @@
+#!/bin/sh
+# start stop hotspot
+
+start() {
+        echo "Starting glxgears"
+        export DISPLAY=:0
+        glxgears &
+}
+
+stop() {
+        echo "Killing glxgears"
+        killall glxgears
+        if [ $? -eq 0 ]
+        then
+                echo "OK"
+        else
+                echo "Error: Unable to stop glxgears" >&2
+        fi
+
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  *)
+	echo "Usage: $0 {start|stop}"
+	exit 1
+
+esac
+exit $?

@@ -1,0 +1,34 @@
+#!/bin/sh
+# start stop hotspot
+
+start() {
+	echo "Starting glmark2"
+        export DISPLAY=:0
+        glmark2 &
+}
+
+stop() {
+        echo "Killing glmark2"
+        killall glmark2
+        if [ $? -eq 0 ]
+        then
+                echo "OK"
+        else
+                echo "Error: Unable to stop glmark2" >&2
+        fi
+
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  *)
+	echo "Usage: $0 {start|stop}"
+	exit 1
+
+esac
+exit $?

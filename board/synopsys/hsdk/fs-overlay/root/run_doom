@@ -1,0 +1,46 @@
+#!/bin/sh
+# start stop hotspot
+
+start() {
+	echo "Starting DOOM"
+	/usr/sbin/fbset > /etc/fb.modes
+        if [ $? -eq 0 ]
+        then
+                echo "fb mode is set"
+        else
+                echo "Error: Unable to set fb mode" >&2
+        fi
+
+    	export SDL_NOMOUSE=1
+	/usr/bin/chocolate-doom &
+}
+
+stop() {
+        echo "Stopping Doom"
+        killall chocolate-doom
+        sleep 1
+        killall chocolate-doom
+        sleep 2
+        killall chocolate-doom
+        if [ $? -eq 0 ]
+        then
+                echo "OK"
+        else
+                echo "Error: Unable to stop DOOM" >&2
+        fi
+
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  *)
+	echo "Usage: $0 {start|stop}"
+	exit 1
+
+esac
+exit $?

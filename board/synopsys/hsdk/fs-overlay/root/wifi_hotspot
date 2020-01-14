@@ -1,0 +1,44 @@
+#!/bin/sh
+# start stop hotspot
+
+start() {
+	# Setup iptables
+	/etc/init.d/S41dhcpcd start
+	/etc/init.d/S80dnsmasq start
+	
+	# add "nameserver" to resolv.conf generation from udhcpc dns server
+	udhcpc 2>&1 | tail -1 > tmp
+	sed 's/adding dns/nameserver/' tmp > /etc/resolv.conf.head
+
+	echo 1 > /proc/sys/net/ipv4/ip_forward
+	iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+	iptables -A FORWARD -i eth0 -o wlan0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+	iptables -A FORWARD -i wlan0 -o eth0 -j ACCEPT
+	sleep 1
+	
+	# Start hotspot
+	echo "Start hotspot:"
+	hostapd -B /etc/hostapd.conf
+	echo "OK"
+}
+stop() {
+	echo "Stopping hostapd"
+	/etc/init.d/S41dhcpcd stop
+	/etc/init.d/S80dnsmasq stop
+	killall hostapd
+	echo "OK"
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  *)
+	echo "Usage: $0 {start|stop}"
+	exit 1
+
+esac
+exit $?

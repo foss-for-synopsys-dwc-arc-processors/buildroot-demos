@@ -1,0 +1,28 @@
+#/bin/sh
+
+case "$1" in
+  start)
+    echo "Changing system settings..."
+    date -s 2018.01.01-00:00
+    echo "Chaning user password"
+    echo -e "testhsdkssh42\ntesthsdkssh42" | passwd hsdk-user
+    /etc/init.d/S41dhcpcd stop
+    /etc/init.d/S80dnsmasq stop
+
+    # weston env setting
+    mkdir -p -m 0700 /tmp/weston && export XDG_RUNTIME_DIR=/tmp/weston
+    printf "[core]\ngbm-format=rgb565\n\nrequire-input=false\n\nuse-pixman=true\n\n[output]\ntransform=normal\n" > $XDG_RUNTIME_DIR/weston.ini
+    ;;
+  stop)
+    echo -n "..."
+    ;;
+  restart|reload)
+    "$0" stop
+    "$0" start
+    ;;
+  *)
+    echo $"Usage: $0 {start|stop|restart}"
+    exit 1
+esac
+
+exit $?

@@ -1,0 +1,84 @@
+From 1e3b12c8a513dc98f5fff60d1cc01f4f50a12137 Mon Sep 17 00:00:00 2001
+From: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+Date: Fri, 13 Dec 2019 15:48:33 +0300
+Subject: [PATCH 08/23] ARC: HSDKv2: add PGU and HDMI nodes
+
+Signed-off-by: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+---
+ arch/arc/boot/dts/hsdk.dts | 60 ++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 60 insertions(+)
+
+diff --git a/arch/arc/boot/dts/hsdk.dts b/arch/arc/boot/dts/hsdk.dts
+index 8a8f203d8f93..640e46350bb9 100644
+--- a/arch/arc/boot/dts/hsdk.dts
++++ b/arch/arc/boot/dts/hsdk.dts
+@@ -328,6 +328,66 @@
+ 			snps,priority = <0 1 2 3>;
+ 			snps,axi-max-burst-len = <16>;
+ 		};
++
++		apbclk: apbclk {
++			compatible = "fixed-clock";
++			clock-frequency = <50000000>;
++			#clock-cells = <0>;
++		};
++
++		hdmi_pix_clk: hdmi_pix_clk {
++			compatible = "fixed-clock";
++			#clock-cells = <0>;
++			clock-frequency = <27000000>;
++		};
++
++		hdmi: hdmi@0x10000 {
++			compatible = "snps,hsdk-hdmi";
++			reg = <0x10000 0x10000>;
++			reg-io-width = <1>;
++			interrupts = <14>;
++			clocks = <&apbclk>, <&hdmi_pix_clk>;
++			clock-names = "iahb", "isfr";
++			status = "okay";
++
++			ports {
++				#address-cells = <1>;
++				#size-cells = <0>;
++
++				port@0 {
++					reg = <0>;
++					hdmi_enc_input: endpoint {
++						remote-endpoint = <&pgu_output>;
++					};
++				};
++
++				port@1 {
++					reg = <1>;
++				};
++				port@2 {
++					/* HDMI sound */
++					reg = <2>;
++				};
++			};
++		};
++
++		pgu: pgu@0xb000 {
++			compatible = "snps,arcpgu";
++			reg = <0xb000 0x400>;
++			clocks = <&hdmi_pix_clk>;
++			clock-names = "pxlclk";
++			encoder-slave = <&hdmi>;
++//			memory-region = <&frame_buffer>;
++
++			port_o: port@0 {
++				#address-cells = <1>;
++				#size-cells = <0>;
++
++				pgu_output: endpoint {
++					remote-endpoint = <&hdmi_enc_input>;
++				};
++			};
++		};
+ 	};
+ 
+ 	memory@80000000 {
+-- 
+2.16.2
+

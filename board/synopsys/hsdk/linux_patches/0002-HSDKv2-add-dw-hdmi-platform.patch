@@ -1,0 +1,215 @@
+From 1c5f3bad235970b67c4113a9f4aed82cafe5aa2c Mon Sep 17 00:00:00 2001
+From: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+Date: Tue, 11 Jun 2019 14:43:48 +0300
+Subject: [PATCH 02/23] HSDKv2: add dw-hdmi platform
+
+Signed-off-by: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+---
+ drivers/gpu/drm/Makefile                |   1 +
+ drivers/gpu/drm/bridge/synopsys/Kconfig |   2 +-
+ drivers/gpu/drm/dw_hdmi.c               | 169 ++++++++++++++++++++++++++++++++
+ 3 files changed, 171 insertions(+), 1 deletion(-)
+ create mode 100644 drivers/gpu/drm/dw_hdmi.c
+
+diff --git a/drivers/gpu/drm/Makefile b/drivers/gpu/drm/Makefile
+index 82ff826b33cc..dce0ec26a0d7 100644
+--- a/drivers/gpu/drm/Makefile
++++ b/drivers/gpu/drm/Makefile
+@@ -112,6 +112,7 @@ obj-y			+= hisilicon/
+ obj-$(CONFIG_DRM_ZTE)	+= zte/
+ obj-$(CONFIG_DRM_MXSFB)	+= mxsfb/
+ obj-y			+= tiny/
++obj-y			+= dw_hdmi.o
+ obj-$(CONFIG_DRM_PL111) += pl111/
+ obj-$(CONFIG_DRM_TVE200) += tve200/
+ obj-$(CONFIG_DRM_XEN) += xen/
+diff --git a/drivers/gpu/drm/bridge/synopsys/Kconfig b/drivers/gpu/drm/bridge/synopsys/Kconfig
+index 21a1be3ced0f..66fc28965e09 100644
+--- a/drivers/gpu/drm/bridge/synopsys/Kconfig
++++ b/drivers/gpu/drm/bridge/synopsys/Kconfig
+@@ -1,6 +1,6 @@
+ # SPDX-License-Identifier: GPL-2.0-only
+ config DRM_DW_HDMI
+-	tristate
++	tristate "dw hdmi"
+ 	select DRM_KMS_HELPER
+ 	select REGMAP_MMIO
+ 	select CEC_CORE if CEC_NOTIFIER
+diff --git a/drivers/gpu/drm/dw_hdmi.c b/drivers/gpu/drm/dw_hdmi.c
+new file mode 100644
+index 000000000000..0d83eb7e5f85
+--- /dev/null
++++ b/drivers/gpu/drm/dw_hdmi.c
+@@ -0,0 +1,169 @@
++/*
++ * BLA-BLA-BLA License
++ */
++
++#include <linux/module.h>
++#include <linux/platform_device.h>
++#include <linux/component.h>
++#include <drm/bridge/dw_hdmi.h>
++#include <linux/regmap.h>
++#include <drm/drm_of.h>
++#include <drm/drmP.h>
++#include <drm/drm_crtc_helper.h>
++#include <drm/drm_edid.h>
++#include <drm/drm_encoder_slave.h>
++
++static const struct dw_hdmi_mpll_config snps_mpll_cfg[] = {
++	{
++		26740000, {
++			{ 0x00B3, 0x0000 },
++			{ 0x00B3, 0x0000 },
++			{ 0x00B3, 0x0000 }
++		},
++	}, {
++		27000000, {
++			{ 0x00B3, 0x0000 },
++			{ 0x00B3, 0x0000 },
++			{ 0x00B3, 0x0000 }
++		},
++	}, {
++		45250000, {
++			{ 0x01e0, 0x0000 },
++			{ 0x21e1, 0x0000 },
++			{ 0x41e2, 0x0000 }
++		},
++	}, {
++		92500000, {
++			{ 0x0140, 0x0005 },
++			{ 0x2141, 0x0005 },
++			{ 0x4142, 0x0005 },
++		},
++	}, {
++		148500000, {
++			{ 0x00a0, 0x000a },
++			{ 0x20a1, 0x000a },
++			{ 0x40a2, 0x000a },
++		},
++	}, {
++		216000000, {
++			{ 0x00a0, 0x000a },
++			{ 0x2001, 0x000f },
++			{ 0x4002, 0x000f },
++		},
++	}, {
++		~0UL, {
++			{ 0x00B3, 0x0000 },
++			{ 0x00B3, 0x0000 },
++			{ 0x00B3, 0x0000 },
++		},
++	}
++};
++
++static const struct dw_hdmi_curr_ctrl snps_cur_ctr[] = {
++	/*      pixelclk     bpp8    bpp10   bpp12 */
++	{
++		26740000, { 0x0000, 0x0000, 0x0000 },
++	}, {
++		27000000, { 0x0000, 0x0000, 0x0000 },
++	}, {
++		54000000, { 0x091c, 0x091c, 0x06dc },
++	}, {
++		58400000, { 0x091c, 0x06dc, 0x06dc },
++	}, {
++		72000000, { 0x06dc, 0x06dc, 0x091c },
++	}, {
++		74250000, { 0x06dc, 0x0b5c, 0x091c },
++	}, {
++		118800000, { 0x091c, 0x091c, 0x06dc },
++	}, {
++		216000000, { 0x06dc, 0x0b5c, 0x091c },
++	}, {
++		~0UL, { 0x0000, 0x0000, 0x0000 },
++	},
++};
++
++static const struct dw_hdmi_phy_config snps_phy_config[] = {
++	/*pixelclk   symbol   term   vlev */
++	{ 26740000,  0x8009, 0x0004, 0x0232},
++	{ 27000000,  0x8009, 0x0004, 0x0232},
++	{ 216000000, 0x800d, 0x0005, 0x01ad},
++	{ ~0UL,      0x8009, 0x0004, 0x0232}
++};
++
++/* FIXME: FPGA realization supports only 27MHz. */
++static enum drm_mode_status dw_hdmi_mode_valid(struct drm_connector *con,
++					       const struct drm_display_mode *mode)
++{
++	const int delta = 500;
++
++	dev_info(con->dev->dev, "PAL: %s clock is: %d KHz\n",
++		 __func__, mode->clock);
++
++	if (mode->clock < (27000 - delta))
++		return MODE_CLOCK_LOW;
++	if (mode->clock > (27000 + delta))
++		return MODE_CLOCK_HIGH;
++
++	return MODE_OK;
++}
++
++static struct dw_hdmi_plat_data dw_hdmi_drv_data = {
++	.mpll_cfg   = snps_mpll_cfg,
++	.cur_ctr    = snps_cur_ctr,
++	.phy_config = snps_phy_config,
++	.mode_valid = dw_hdmi_mode_valid,
++};
++
++static const struct of_device_id dw_hdmi_snps_dt_ids[] = {
++	{
++		.compatible = "snps,hsdk-hdmi",
++		.data = &dw_hdmi_drv_data
++	},
++	{},
++};
++MODULE_DEVICE_TABLE(of, dw_hdmi_snps_dt_ids);
++
++static int dw_hdmi_snps_probe(struct platform_device *pdev)
++{
++	const struct dw_hdmi_plat_data *plat_data;
++	const struct of_device_id *match;
++	struct dw_hdmi *hdmi;
++
++	if (!pdev->dev.of_node)
++		return -ENODEV;
++
++	match = of_match_node(dw_hdmi_snps_dt_ids, pdev->dev.of_node);
++	plat_data = match->data;
++
++	hdmi = dw_hdmi_probe(pdev, plat_data);
++	if (IS_ERR(hdmi))
++		return PTR_ERR(hdmi);
++
++	platform_set_drvdata(pdev, hdmi);
++
++	return 0;
++}
++
++static int dw_hdmi_snps_remove(struct platform_device *pdev)
++{
++	struct dw_hdmi *hdmi = platform_get_drvdata(pdev);
++
++	dw_hdmi_remove(hdmi);
++
++	return 0;
++}
++
++static struct platform_driver dw_hdmi_snps_platform_driver = {
++	.probe  = dw_hdmi_snps_probe,
++	.remove = dw_hdmi_snps_remove,
++	.driver = {
++		.name = "dw-hdmi-hsdk",
++		.of_match_table = dw_hdmi_snps_dt_ids,
++	},
++};
++
++module_platform_driver(dw_hdmi_snps_platform_driver);
++
++MODULE_DESCRIPTION("HSDK Specific DW-HDMI Driver Extension");
++MODULE_LICENSE("GPL");
++MODULE_ALIAS("platform:dw-hdmi-snps");
+-- 
+2.16.2
+

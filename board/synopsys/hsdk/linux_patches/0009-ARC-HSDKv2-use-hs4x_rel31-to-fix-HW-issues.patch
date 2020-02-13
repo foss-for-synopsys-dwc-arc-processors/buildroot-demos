@@ -1,0 +1,26 @@
+From de1fbbd00063c25efc8046ed694488b2f30b428b Mon Sep 17 00:00:00 2001
+From: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+Date: Mon, 13 Jan 2020 15:29:31 +0300
+Subject: [PATCH 09/23] ARC: HSDKv2: use hs4x_rel31 to fix HW issues
+
+Signed-off-by: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+---
+ arch/arc/Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arc/Makefile b/arch/arc/Makefile
+index f1c44cccf8d6..389bf7dfdfa6 100644
+--- a/arch/arc/Makefile
++++ b/arch/arc/Makefile
+@@ -11,7 +11,7 @@ endif
+ 
+ cflags-y	+= -fno-common -pipe -fno-builtin -mmedium-calls -D__linux__
+ cflags-$(CONFIG_ISA_ARCOMPACT)	+= -mA7
+-cflags-$(CONFIG_ISA_ARCV2)	+= -mcpu=hs38
++cflags-$(CONFIG_ISA_ARCV2)	+= -mcpu=hs4x_rel31
+ 
+ ifdef CONFIG_ARC_CURR_IN_REG
+ # For a global register defintion, make sure it gets passed to every file
+-- 
+2.16.2
+

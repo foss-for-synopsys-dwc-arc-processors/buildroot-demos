@@ -1,0 +1,62 @@
+From 954ceea7d4ccc2203e6e1abb82422de4b6409a5d Mon Sep 17 00:00:00 2001
+From: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+Date: Thu, 23 Jan 2020 12:14:38 +0300
+Subject: [PATCH 13/23] HSDKv2: add wifi SDIO node to dts
+
+Signed-off-by: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+---
+ arch/arc/boot/dts/hsdk.dts | 31 +++++++++++++++++++++++++++++++
+ 1 file changed, 31 insertions(+)
+
+diff --git a/arch/arc/boot/dts/hsdk.dts b/arch/arc/boot/dts/hsdk.dts
+index 640e46350bb9..6ffad47493c6 100644
+--- a/arch/arc/boot/dts/hsdk.dts
++++ b/arch/arc/boot/dts/hsdk.dts
+@@ -151,6 +151,23 @@
+ 			#clock-cells = <0>;
+ 		};
+ 
++		sdio_ciu: sdio-ciu {
++			compatible = "fixed-clock";
++			/*
++			 * DW sdio controller has external ciu clock divider
++			 * controlled via register in SDIO IP. Due to its
++			 * unexpected default value (it should divide by 1
++			 * but it divides by 8) SDIO IP uses wrong clock and
++			 * works unstable (see STAR 9001204800)
++			 * We switched to the minimum possible value of the
++			 * divisor (div-by-2) in HSDK platform code.
++			 * So add temporary fix and change clock frequency
++			 * to 50000000 Hz until we fix dw sdio driver itself.
++			 */
++			clock-frequency = <50000000>;
++			#clock-cells = <0>;
++		};
++
+ 		mmcclk_ciu: mmcclk-ciu {
+ 			compatible = "fixed-clock";
+ 			/*
+@@ -263,6 +280,20 @@
+ 			dma-coherent;
+ 		};
+ 
++		/* WiFi module */
++		sdio@a800 {
++			compatible = "altr,socfpga-dw-mshc";
++			reg = <0xa800 0x400>;
++			num-slots = <1>;
++			fifo-depth = <16>;
++			card-detect-delay = <200>;
++			clocks = <&mmcclk_biu>, <&sdio_ciu>;
++			clock-names = "biu", "ciu";
++			interrupts = <56>;
++			bus-width = <4>;
++			dma-coherent;
++		};
++
+ 		spi0: spi@20000 {
+ 			compatible = "snps,dw-apb-ssi";
+ 			reg = <0x20000 0x100>;
+-- 
+2.16.2
+

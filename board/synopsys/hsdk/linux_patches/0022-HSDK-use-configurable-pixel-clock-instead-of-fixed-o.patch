@@ -1,0 +1,60 @@
+From 69fc8cd35a741e3c0e60ceced85958a012bd2844 Mon Sep 17 00:00:00 2001
+From: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+Date: Mon, 27 Jan 2020 20:16:53 +0300
+Subject: [PATCH 22/23] HSDK: use configurable pixel clock instead of fixed one
+
+Signed-off-by: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+---
+ arch/arc/boot/dts/hsdk.dts | 22 ++++++++++++++++------
+ 1 file changed, 16 insertions(+), 6 deletions(-)
+
+diff --git a/arch/arc/boot/dts/hsdk.dts b/arch/arc/boot/dts/hsdk.dts
+index 6ffad47493c6..e09f526a1f1d 100644
+--- a/arch/arc/boot/dts/hsdk.dts
++++ b/arch/arc/boot/dts/hsdk.dts
+@@ -65,6 +65,12 @@
+ 		clock-frequency = <33333333>;
+ 	};
+ 
++	video_ref: video-ref {
++		#clock-cells = <0>;
++		compatible = "fixed-clock";
++		clock-frequency = <27000000>;
++	};
++
+ 	reg_5v0: regulator-5v0 {
+ 		compatible = "regulator-fixed";
+ 
+@@ -135,6 +141,16 @@
+ 			assigned-clock-rates = <1000000000>;
+ 		};
+ 
++		hdmi_pix_clk: hdmi-pix-clk@40 {
++			compatible = "snps,hsdk-hdmi-pll-clock";
++			reg = <0x40 0x10>;
++			#clock-cells = <0>;
++			clocks = <&video_ref>;
++
++			assigned-clocks = <&hdmi_pix_clk>;
++			assigned-clock-rates = <148500000>;
++		};
++
+ 		serial: serial@5000 {
+ 			compatible = "snps,dw-apb-uart";
+ 			reg = <0x5000 0x100>;
+@@ -366,12 +382,6 @@
+ 			#clock-cells = <0>;
+ 		};
+ 
+-		hdmi_pix_clk: hdmi_pix_clk {
+-			compatible = "fixed-clock";
+-			#clock-cells = <0>;
+-			clock-frequency = <27000000>;
+-		};
+-
+ 		hdmi: hdmi@0x10000 {
+ 			compatible = "snps,hsdk-hdmi";
+ 			reg = <0x10000 0x10000>;
+-- 
+2.16.2
+

@@ -1,7 +1,7 @@
-From 51e953e451fe95f0203195760912f296ae76bf7f Mon Sep 17 00:00:00 2001
-From: Evgeniy Didin <Evgeniy.Didin@synopsys.com>
-Date: Tue, 14 Jan 2020 09:57:33 +0300
-Subject: [PATCH 1/2] mmc: dw_mmc: Take care about card_number field in CMD
+From 3de1dfbf92a2214082567e92f02031dc3d3e07eb Mon Sep 17 00:00:00 2001
+From: Alexey Brodkin <abrodkin@synopsys.com>
+Date: Mon, 21 Aug 2017 15:33:10 +0300
+Subject: [PATCH 11/23] mmc: dw_mmc: Take care about card_number field in CMD
  register
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -15,7 +15,6 @@ everything used to work properly. But to use other slots we do need
 to set correct value here.
 
 Signed-off-by: Alexey Brodkin <abrodkin@synopsys.com>
-Signed-off-by: Evgeniy Didin <Evgeniy.Didin@synopsys.com>
 ---
  drivers/mmc/host/dw_mmc.c | 9 ++++++---
  drivers/mmc/host/dw_mmc.h | 1 +

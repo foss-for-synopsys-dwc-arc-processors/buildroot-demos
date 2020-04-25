@@ -8,7 +8,13 @@ start() {
 	
 	# add "nameserver" to resolv.conf generation from udhcpc dns server
 	udhcpc 2>&1 | tail -1 > tmp
-	sed 's/adding dns/nameserver/' tmp > /etc/resolv.conf.head
+        if grep -q failing tmp;
+        then
+                echo "Unable to get IP addres, check Ethernet connection"
+                exit 1
+        else
+                sed 's/adding dns/nameserver/' tmp > /etc/resolv.conf.head
+        fi
 
 	echo 1 > /proc/sys/net/ipv4/ip_forward
 	iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE

@@ -4,8 +4,8 @@ case "$1" in
   start)
     echo "Changing system settings..."
     date -s 2018.01.01-00:00
-    echo "Chaning user password"
-    echo -e "testhsdkssh42\ntesthsdkssh42" | passwd hsdk-user
+    echo "Changing user password"
+    echo -e "qwerty123456\nqwerty123456" | passwd hsdk-user
     /etc/init.d/S41dhcpcd stop
     /etc/init.d/S80dnsmasq stop
 

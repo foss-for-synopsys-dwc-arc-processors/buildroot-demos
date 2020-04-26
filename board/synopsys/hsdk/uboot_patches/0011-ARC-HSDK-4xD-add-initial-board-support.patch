@@ -1,0 +1,280 @@
+From 1065521f4de0d9e16614ed9e7420c63d164a7861 Mon Sep 17 00:00:00 2001
+From: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+Date: Wed, 22 Apr 2020 00:33:40 +0300
+Subject: [PATCH 11/23] ARC: HSDK-4xD: add initial board support
+
+Add initial HSDK-4xD board support.
+The ARC HS4x/HS4xD Development Kit includes a multicore ARC HS4xD-based
+chip that integrates a wide range of interfaces including Ethernet,
+HDMI, WiFi, Bluetooth, USB, SDIO, I2C, SPI, UART, I2S, ADC, PWM and
+GPIO, as well as a Think Silicon GPU.
+
+Signed-off-by: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+---
+ arch/arc/Kconfig                |  2 +-
+ board/synopsys/hsdk/Kconfig     | 17 ++++++++++
+ board/synopsys/hsdk/MAINTAINERS |  3 +-
+ board/synopsys/hsdk/config.mk   |  8 +++++
+ board/synopsys/hsdk/hsdk.c      | 71 +++++++++++++++++++++++++++++++++++++++--
+ configs/hsdk_4xd_defconfig      | 67 ++++++++++++++++++++++++++++++++++++++
+ 6 files changed, 164 insertions(+), 4 deletions(-)
+ create mode 100644 configs/hsdk_4xd_defconfig
+
+diff --git a/arch/arc/Kconfig b/arch/arc/Kconfig
+index 746c2e9607..723caa08e1 100644
+--- a/arch/arc/Kconfig
++++ b/arch/arc/Kconfig
+@@ -173,7 +173,7 @@ config TARGET_EMSDP
+ 	select CPU_ARCEM6
+ 
+ config TARGET_HSDK
+-	bool "Support Synpsys HS DevelopmentKit board"
++	bool "Support Synopsys HSDK or HSDK-4xD board"
+ 
+ config TARGET_IOT_DEVKIT
+ 	bool "Synopsys Brite IoT Development kit"
+diff --git a/board/synopsys/hsdk/Kconfig b/board/synopsys/hsdk/Kconfig
+index e8c00a6e7d..5e23b3229a 100644
+--- a/board/synopsys/hsdk/Kconfig
++++ b/board/synopsys/hsdk/Kconfig
+@@ -9,4 +9,21 @@ config SYS_VENDOR
+ config SYS_CONFIG_NAME
+ 	default "hsdk"
+ 
++choice
++	prompt "HSDK board type"
++	default BOARD_HSDK
++
++config BOARD_HSDK
++	bool "ARC HS Development Kit"
++	help
++	  ARC HS Development Kit based on quard core ARC HS38 processor
++
++config BOARD_HSDK_4XD
++	bool "ARC HS4x/HS4xD Development Kit"
++	help
++	  ARC HS4x/HS4xD Development Kit based on quard core ARC HS48/HS47D
++	  processor
++
++endchoice
++
+ endif
+diff --git a/board/synopsys/hsdk/MAINTAINERS b/board/synopsys/hsdk/MAINTAINERS
+index e22bd1e40b..d385951048 100644
+--- a/board/synopsys/hsdk/MAINTAINERS
++++ b/board/synopsys/hsdk/MAINTAINERS
+@@ -1,5 +1,6 @@
+-HSDK BOARD
++HSDK BOARDs
+ M:	Eugeniy Paltsev <paltsev@synopsys.com>
+ S:	Maintained
+ F:	board/synopsys/hsdk/
+ F:	configs/hsdk_defconfig
++F:	configs/hsdk_4xd_defconfig
+diff --git a/board/synopsys/hsdk/config.mk b/board/synopsys/hsdk/config.mk
+index 5ae22fa2b7..1d01ef5037 100644
+--- a/board/synopsys/hsdk/config.mk
++++ b/board/synopsys/hsdk/config.mk
+@@ -2,9 +2,17 @@
+ #
+ # Copyright (C) 2018 Synopsys, Inc. All rights reserved.
+ 
++ifdef CONFIG_BOARD_HSDK
+ PLATFORM_CPPFLAGS += -mcpu=hs38_linux -mlittle-endian -matomic -mll64 \
+                      -mdiv-rem -mswap -mnorm -mmpy-option=9 -mbarrel-shifter \
+                      -mfpu=fpud_all
++endif
++
++ifdef CONFIG_BOARD_HSDK_4XD
++PLATFORM_CPPFLAGS += -mcpu=hs4x_rel31 -mlittle-endian -matomic -mll64 \
++                     -mdiv-rem -mswap -mnorm -mmpy-option=9 -mbarrel-shifter \
++                     -mfpu=fpud_all
++endif
+ 
+ bsp-generate: u-boot u-boot.bin
+ 	$(Q)python3 $(srctree)/board/$(BOARDDIR)/headerize-hsdk.py \
+diff --git a/board/synopsys/hsdk/hsdk.c b/board/synopsys/hsdk/hsdk.c
+index 67a29e334d..771f7bbf88 100644
+--- a/board/synopsys/hsdk/hsdk.c
++++ b/board/synopsys/hsdk/hsdk.c
+@@ -154,6 +154,56 @@ static const struct env_map_percpu env_map_go[] = {
+ 	{}
+ };
+ 
++enum board_type {
++	T_BOARD_NONE,
++	T_BOARD_HSDK,
++	T_BOARD_HSDK_4XD
++};
++
++static inline enum board_type get_board_type_runtime(void)
++{
++	u32 arc_id = read_aux_reg(ARC_AUX_IDENTITY) & 0xFF;
++
++	if (arc_id == 0x52)
++		return T_BOARD_HSDK;
++	else if (arc_id == 0x54)
++		return T_BOARD_HSDK_4XD;
++	else
++		return T_BOARD_NONE;
++}
++
++static inline enum board_type get_board_type_config(void)
++{
++	if (IS_ENABLED(CONFIG_BOARD_HSDK))
++		return T_BOARD_HSDK;
++	else if (IS_ENABLED(CONFIG_BOARD_HSDK_4XD))
++		return T_BOARD_HSDK_4XD;
++	else
++		return T_BOARD_NONE;
++}
++
++static bool is_board_match_runtime(enum board_type type_req)
++{
++	return get_board_type_runtime() == type_req;
++}
++
++static const char * board_name(enum board_type type)
++{
++	switch (type) {
++		case T_BOARD_HSDK:
++			return "ARC HS Development Kit";
++		case T_BOARD_HSDK_4XD:
++			return "ARC HS4x/HS4xD Development Kit";
++		default:
++			return "?";
++	}
++}
++
++static bool board_mismatch(void)
++{
++	return get_board_type_config() != get_board_type_runtime();
++}
++
+ static void sync_cross_cpu_data(void)
+ {
+ 	u32 value;
+@@ -221,7 +271,9 @@ static void init_cluster_nvlim(void)
+ 
+ 	flush_dcache_all();
+ 	write_aux_reg(ARC_AUX_NON_VOLATILE_LIMIT, val);
+-	write_aux_reg(AUX_AUX_CACHE_LIMIT, val);
++	/* AUX_AUX_CACHE_LIMIT reg is missing starting from HS48 */
++	if (is_board_match_runtime(T_BOARD_HSDK))
++		write_aux_reg(AUX_AUX_CACHE_LIMIT, val);
+ 	flush_n_invalidate_dcache_all();
+ }
+ 
+@@ -758,6 +810,11 @@ static int do_hsdk_go(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[])
+ {
+ 	int ret;
+ 
++	if (board_mismatch()) {
++		printf("ERR: U-boot is not configured for this board!\n");
++		return CMD_RET_FAILURE;
++	}
++
+ 	/*
+ 	 * Check for 'halt' parameter. 'halt' = enter halt-mode just before
+ 	 * starting the application; can be used for debug.
+@@ -798,6 +855,11 @@ static int do_hsdk_init(cmd_tbl_t *cmdtp, int flag, int argc, char *const argv[]
+ 	static bool done = false;
+ 	int ret;
+ 
++	if (board_mismatch()) {
++		printf("ERR: U-boot is not configured for this board!\n");
++		return CMD_RET_FAILURE;
++	}
++
+ 	/* hsdk_init can be run only once */
+ 	if (done) {
+ 		printf("HSDK HW is already initialized! Please reset the board if you want to change the configuration.\n");
+@@ -1031,6 +1093,11 @@ int board_late_init(void)
+ 
+ int checkboard(void)
+ {
+-	puts("Board: Synopsys ARC HS Development Kit\n");
++	printf("Board: Synopsys %s\n", board_name(get_board_type_runtime()));
++
++	if (board_mismatch())
++		printf("WARN: U-boot is configured NOT for this board but for %s!\n",
++		       board_name(get_board_type_config()));
++
+ 	return 0;
+ };
+diff --git a/configs/hsdk_4xd_defconfig b/configs/hsdk_4xd_defconfig
+new file mode 100644
+index 0000000000..ccce53492f
+--- /dev/null
++++ b/configs/hsdk_4xd_defconfig
+@@ -0,0 +1,67 @@
++CONFIG_ARC=y
++CONFIG_ISA_ARCV2=y
++CONFIG_TARGET_HSDK=y
++CONFIG_BOARD_HSDK_4XD=y
++CONFIG_SYS_TEXT_BASE=0x81000000
++CONFIG_DM_GPIO=y
++CONFIG_DEBUG_UART_BASE=0xf0005000
++CONFIG_DEBUG_UART_CLOCK=33333333
++CONFIG_SYS_CLK_FREQ=500000000
++CONFIG_DEBUG_UART=y
++CONFIG_USE_BOOTARGS=y
++CONFIG_BOOTARGS="console=ttyS0,115200n8"
++CONFIG_BOARD_EARLY_INIT_F=y
++CONFIG_BOARD_EARLY_INIT_R=y
++CONFIG_HUSH_PARSER=y
++CONFIG_SYS_PROMPT="hsdk-4xd# "
++CONFIG_CMD_ENV_FLAGS=y
++# CONFIG_CMD_FLASH is not set
++CONFIG_CMD_MMC=y
++CONFIG_CMD_SPI=y
++CONFIG_CMD_USB=y
++# CONFIG_CMD_SETEXPR is not set
++CONFIG_CMD_DHCP=y
++CONFIG_CMD_PING=y
++CONFIG_CMD_CACHE=y
++CONFIG_CMD_EXT2=y
++CONFIG_CMD_EXT4=y
++CONFIG_CMD_EXT4_WRITE=y
++CONFIG_CMD_FAT=y
++CONFIG_OF_CONTROL=y
++CONFIG_OF_EMBED=y
++CONFIG_DEFAULT_DEVICE_TREE="hsdk"
++CONFIG_ENV_IS_IN_FAT=y
++CONFIG_ENV_FAT_INTERFACE="mmc"
++CONFIG_ENV_FAT_DEVICE_AND_PART="0:1"
++CONFIG_SYS_RELOC_GD_ENV_ADDR=y
++CONFIG_NET_RANDOM_ETHADDR=y
++CONFIG_DM=y
++CONFIG_CLK_HSDK=y
++CONFIG_HSDK_CREG_GPIO=y
++CONFIG_MMC=y
++CONFIG_DM_MMC=y
++CONFIG_MMC_DW=y
++CONFIG_MMC_DW_SNPS=y
++CONFIG_MTD=y
++CONFIG_DM_SPI_FLASH=y
++CONFIG_SPI_FLASH_SST=y
++CONFIG_DM_ETH=y
++CONFIG_ETH_DESIGNWARE=y
++CONFIG_MII=y
++CONFIG_DM_RESET=y
++CONFIG_DM_SERIAL=y
++CONFIG_DEBUG_UART_SHIFT=2
++CONFIG_DEBUG_UART_ANNOUNCE=y
++CONFIG_SYS_NS16550=y
++CONFIG_SPI=y
++CONFIG_DM_SPI=y
++CONFIG_DESIGNWARE_SPI=y
++CONFIG_USB=y
++CONFIG_DM_USB=y
++CONFIG_USB_EHCI_HCD=y
++CONFIG_USB_EHCI_GENERIC=y
++CONFIG_USB_OHCI_HCD=y
++CONFIG_USB_OHCI_GENERIC=y
++CONFIG_USB_STORAGE=y
++CONFIG_USE_PRIVATE_LIBGCC=y
++CONFIG_PANIC_HANG=y
+-- 
+2.16.2
+

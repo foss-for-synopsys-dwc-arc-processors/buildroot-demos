@@ -1,0 +1,53 @@
+From 28a8d4812bcd79f83f68c328f0d60eda3e4dccf3 Mon Sep 17 00:00:00 2001
+From: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+Date: Thu, 23 Apr 2020 14:52:43 +0300
+Subject: [PATCH 17/23] ARC: HSDK-4xD: print timer clock value
+
+Print timer clock value in hsdk_clock print_all command.
+
+Signed-off-by: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+---
+ arch/arc/dts/hsdk-common.dtsi | 6 ++++--
+ board/synopsys/hsdk/hsdk.c    | 2 ++
+ 2 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arc/dts/hsdk-common.dtsi b/arch/arc/dts/hsdk-common.dtsi
+index 7292a8da51..fd4245e164 100644
+--- a/arch/arc/dts/hsdk-common.dtsi
++++ b/arch/arc/dts/hsdk-common.dtsi
+@@ -40,7 +40,8 @@
+ 			 <&cgu_clk CLK_SYS_DMAC_CFG>, <&cgu_clk CLK_SYS_SDIO_REF>,
+ 			 <&cgu_clk CLK_SYS_SPI_REF>, <&cgu_clk CLK_SYS_I2C_REF>,
+ 			 <&cgu_clk CLK_SYS_UART_REF>, <&cgu_clk CLK_SYS_EBI_REF>,
+-			 <&cgu_clk CLK_TUN_ROM>, <&cgu_clk CLK_TUN_PWM>;
++			 <&cgu_clk CLK_TUN_ROM>, <&cgu_clk CLK_TUN_PWM>,
++			 <&cgu_clk CLK_TUN_TIMER>;
+ 		clock-names = "cpu-pll", "sys-pll",
+ 			      "tun-pll", "ddr-clk",
+ 			      "cpu-clk", "hdmi-pll",
+@@ -53,7 +54,8 @@
+ 			      "dmac-cfg-clk", "sdio-ref-clk",
+ 			      "spi-clk", "i2c-clk",
+ 			      "uart-clk", "ebi-clk",
+-			      "rom-clk", "pwm-clk";
++			      "rom-clk", "pwm-clk",
++			      "timer-clk";
+ 	};
+ 
+ 	cgu_clk: cgu-clk@f0000000 {
+diff --git a/board/synopsys/hsdk/hsdk.c b/board/synopsys/hsdk/hsdk.c
+index 7ba2a56c33..b8b995db47 100644
+--- a/board/synopsys/hsdk/hsdk.c
++++ b/board/synopsys/hsdk/hsdk.c
+@@ -1017,6 +1017,8 @@ static int do_hsdk_clock_print_all(cmd_tbl_t *cmdtp, int flag, int argc,
+ 	soc_clk_ctl("tun-clk", NULL, CLK_PRINT | CLK_MHZ);
+ 	soc_clk_ctl("rom-clk", NULL, CLK_PRINT | CLK_MHZ);
+ 	soc_clk_ctl("pwm-clk", NULL, CLK_PRINT | CLK_MHZ);
++	if (is_board_match_runtime(T_BOARD_HSDK_4XD))
++		soc_clk_ctl("timer-clk", NULL, CLK_PRINT | CLK_MHZ);
+ 	printf("\n");
+ 
+ 	return CMD_RET_SUCCESS;
+-- 
+2.16.2
+

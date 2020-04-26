@@ -1,0 +1,77 @@
+From 22228aa2499c7e1088ae264e1f5f229040643035 Mon Sep 17 00:00:00 2001
+From: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+Date: Thu, 23 Apr 2020 14:50:50 +0300
+Subject: [PATCH 10/23] ARC: HSDK: CGU: add support for timer clock
+
+Add support for additional timer clock which belongs to tunnel
+domain.
+
+Signed-off-by: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+---
+ drivers/clk/clk-hsdk-cgu.c                | 9 ++++++---
+ include/dt-bindings/clock/snps,hsdk-cgu.h | 5 +++--
+ 2 files changed, 9 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/clk/clk-hsdk-cgu.c b/drivers/clk/clk-hsdk-cgu.c
+index 6eaafdeaf9..3035c5fb38 100644
+--- a/drivers/clk/clk-hsdk-cgu.c
++++ b/drivers/clk/clk-hsdk-cgu.c
+@@ -67,6 +67,7 @@
+ #define CGU_TUN_IDIV_TUN	0x380
+ #define CGU_TUN_IDIV_ROM	0x390
+ #define CGU_TUN_IDIV_PWM	0x3A0
++#define CGU_TUN_IDIV_TIMER	0x3B0
+ #define CGU_HDMI_IDIV_APB	0x480
+ #define CGU_SYS_IDIV_APB	0x180
+ #define CGU_SYS_IDIV_AXI	0x190
+@@ -123,12 +124,12 @@
+ #define MIN_PLL_RATE			100000000 /* 100 MHz */
+ #define PARENT_RATE_33			33333333 /* fixed clock - xtal */
+ #define PARENT_RATE_27			27000000 /* fixed clock - xtal */
+-#define CGU_MAX_CLOCKS			26
++#define CGU_MAX_CLOCKS			27
+ 
+ #define CGU_SYS_CLOCKS			16
+ #define MAX_AXI_CLOCKS			4
+ 
+-#define CGU_TUN_CLOCKS			3
++#define CGU_TUN_CLOCKS			4
+ #define MAX_TUN_CLOCKS			6
+ 
+ struct hsdk_tun_idiv_cfg {
+@@ -147,7 +148,8 @@ static const struct hsdk_tun_clk_cfg tun_clk_cfg = {
+ 	{ 600000000, 600000000, 600000000, 600000000, 750000000, 600000000 }, {
+ 	{ CGU_TUN_IDIV_TUN,	{ 24,	12,	8,	6,	6,	4 } },
+ 	{ CGU_TUN_IDIV_ROM,	{ 4,	4,	4,	4,	5,	4 } },
+-	{ CGU_TUN_IDIV_PWM,	{ 8,	8,	8,	8,	10,	8 } }
++	{ CGU_TUN_IDIV_PWM,	{ 8,	8,	8,	8,	10,	8 } },
++	{ CGU_TUN_IDIV_TIMER,	{ 12,	12,	12,	12,	15,	12 } }
+ 	}
+ };
+ 
+@@ -316,6 +318,7 @@ static const struct hsdk_cgu_clock_map clock_map[] = {
+ 	{ CGU_TUN_PLL, 0, CGU_TUN_IDIV_TUN, &sdt_pll_dat, idiv_get, tun_clk_set, idiv_off },
+ 	{ CGU_TUN_PLL, 0, CGU_TUN_IDIV_ROM, &sdt_pll_dat, idiv_get, idiv_set, idiv_off },
+ 	{ CGU_TUN_PLL, 0, CGU_TUN_IDIV_PWM, &sdt_pll_dat, idiv_get, idiv_set, idiv_off },
++	{ CGU_TUN_PLL, 0, CGU_TUN_IDIV_TIMER, &sdt_pll_dat, idiv_get, idiv_set, idiv_off },
+ 	{ CGU_HDMI_PLL, 0, 0, &hdmi_pll_dat, pll_get, pll_set, NULL },
+ 	{ CGU_HDMI_PLL, 0, CGU_HDMI_IDIV_APB, &hdmi_pll_dat, idiv_get, idiv_set, idiv_off }
+ };
+diff --git a/include/dt-bindings/clock/snps,hsdk-cgu.h b/include/dt-bindings/clock/snps,hsdk-cgu.h
+index 2cfe34eb35..1ce7661cd9 100644
+--- a/include/dt-bindings/clock/snps,hsdk-cgu.h
++++ b/include/dt-bindings/clock/snps,hsdk-cgu.h
+@@ -36,7 +36,8 @@
+ #define CLK_TUN_TUN		21
+ #define CLK_TUN_ROM		22
+ #define CLK_TUN_PWM		23
+-#define CLK_HDMI_PLL		24
+-#define CLK_HDMI		25
++#define CLK_TUN_TIMER		24
++#define CLK_HDMI_PLL		25
++#define CLK_HDMI		26
+ 
+ #endif /* __DT_BINDINGS_CLK_HSDK_CGU_H_ */
+-- 
+2.16.2
+

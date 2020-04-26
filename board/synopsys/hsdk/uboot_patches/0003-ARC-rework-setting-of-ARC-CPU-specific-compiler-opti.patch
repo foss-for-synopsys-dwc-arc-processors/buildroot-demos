@@ -1,0 +1,206 @@
+From 21d17c1e1b73d60bbd69d1412af7b619c64c1f04 Mon Sep 17 00:00:00 2001
+From: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+Date: Wed, 12 Feb 2020 14:23:54 +0300
+Subject: [PATCH 03/23] ARC: rework setting of ARC CPU specific compiler
+ options
+
+It's a very rare if at all existing occasion when ARC CPU template
+is used as is w/o any changes - in the end it's a beauty and competitive
+advantage of ARC cores to be tailored for a particular use-case - and
+so it doesn't make a lot of sense to offer template-based "-mcpu" selection.
+Given for each and every platform we end-up adding quite a few more flags
+it's logical to move "-mcpu" selection to platform's definition as well
+which we exactly do here.
+
+Signed-off-by: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+Signed-off-by: Alexey Brodkin <abrodkin@synopsys.com>
+---
+ arch/arc/config.mk                  | 20 --------------------
+ board/abilis/tb100/config.mk        |  5 +++++
+ board/synopsys/Kconfig              |  9 +++++++++
+ board/synopsys/axs10x/config.mk     |  6 ++++++
+ board/synopsys/config.mk            |  8 ++++++++
+ board/synopsys/emsdp/config.mk      |  2 +-
+ board/synopsys/hsdk/config.mk       |  4 ++++
+ board/synopsys/iot_devkit/config.mk |  3 ++-
+ configs/nsim_700_defconfig          |  1 +
+ configs/nsim_700be_defconfig        |  1 +
+ configs/nsim_hs38_defconfig         |  1 +
+ configs/nsim_hs38be_defconfig       |  1 +
+ 12 files changed, 39 insertions(+), 22 deletions(-)
+ create mode 100644 board/abilis/tb100/config.mk
+ create mode 100644 board/synopsys/config.mk
+
+diff --git a/arch/arc/config.mk b/arch/arc/config.mk
+index 18005d9993..6fa29adae8 100644
+--- a/arch/arc/config.mk
++++ b/arch/arc/config.mk
+@@ -22,26 +22,6 @@ ifdef CONFIG_ARC_MMU_VER
+ CONFIG_MMU = 1
+ endif
+ 
+-ifdef CONFIG_CPU_ARC750D
+-PLATFORM_CPPFLAGS += -mcpu=arc700
+-endif
+-
+-ifdef CONFIG_CPU_ARC770D
+-PLATFORM_CPPFLAGS += -mcpu=arc700 -mlock -mswape
+-endif
+-
+-ifdef CONFIG_CPU_ARCEM6
+-PLATFORM_CPPFLAGS += -mcpu=arcem
+-endif
+-
+-ifdef CONFIG_CPU_ARCHS34
+-PLATFORM_CPPFLAGS += -mcpu=archs
+-endif
+-
+-ifdef CONFIG_CPU_ARCHS38
+-PLATFORM_CPPFLAGS += -mcpu=archs
+-endif
+-
+ PLATFORM_CPPFLAGS += -ffixed-r25 -D__ARC__ -gdwarf-2 -mno-sdata
+ PLATFORM_RELFLAGS += -ffunction-sections -fdata-sections -fno-common
+ 
+diff --git a/board/abilis/tb100/config.mk b/board/abilis/tb100/config.mk
+new file mode 100644
+index 0000000000..9e8dee49bd
+--- /dev/null
++++ b/board/abilis/tb100/config.mk
+@@ -0,0 +1,5 @@
++# SPDX-License-Identifier: GPL-2.0+
++#
++# Copyright (C) 2020 Synopsys, Inc. All rights reserved.
++
++PLATFORM_CPPFLAGS += -mcpu=arc700 -mlock -mswape
+diff --git a/board/synopsys/Kconfig b/board/synopsys/Kconfig
+index 27e5509b26..7d3d98433a 100644
+--- a/board/synopsys/Kconfig
++++ b/board/synopsys/Kconfig
+@@ -6,4 +6,13 @@ config SYS_VENDOR
+ config SYS_CONFIG_NAME
+ 	default "nsim"
+ 
++config NSIM_BOARD_CPPFLAGS
++	string "board arc-specific compiler options"
++	help
++	  For nSIM we allow to set custom arc-specific compiler options
++	  (like -mcpu=) instead of hardcoding them in its makefile as nSIM
++	  target is used for representing targets without fixed CPU version
++	  like FPGA-based boards and software simulators.
++	  This variable takes space separated compiler options list.
++
+ endif
+diff --git a/board/synopsys/axs10x/config.mk b/board/synopsys/axs10x/config.mk
+index 81ff498f81..ccac544290 100644
+--- a/board/synopsys/axs10x/config.mk
++++ b/board/synopsys/axs10x/config.mk
+@@ -2,6 +2,12 @@
+ #
+ # Copyright (C) 2018 Synopsys, Inc. All rights reserved.
+ 
++ifdef CONFIG_TARGET_AXS103
++  PLATFORM_CPPFLAGS += -mcpu=archs
++else
++  PLATFORM_CPPFLAGS += -mcpu=arc700 -mlock -mswape
++endif
++
+ bsp-generate: u-boot u-boot.bin
+ ifdef CONFIG_ISA_ARCV2
+ 	$(Q)python3 $(srctree)/board/$(BOARDDIR)/headerize-axs.py \
+diff --git a/board/synopsys/config.mk b/board/synopsys/config.mk
+new file mode 100644
+index 0000000000..40f9578a25
+--- /dev/null
++++ b/board/synopsys/config.mk
+@@ -0,0 +1,8 @@
++# SPDX-License-Identifier: GPL-2.0+
++#
++# Copyright (C) 2020 Synopsys, Inc. All rights reserved.
++
++# CONFIG_NSIM_BOARD_CPPFLAGS is a string variable which comes from defconfig
++# with double quotes. We use echo to remove them so CONFIG_NSIM_BOARD_CPPFLAGS
++# won't be treated by compiler as a single option.
++PLATFORM_CPPFLAGS += $(shell echo $(CONFIG_NSIM_BOARD_CPPFLAGS))
+diff --git a/board/synopsys/emsdp/config.mk b/board/synopsys/emsdp/config.mk
+index 67fd7bf82a..5bd10442af 100644
+--- a/board/synopsys/emsdp/config.mk
++++ b/board/synopsys/emsdp/config.mk
+@@ -1,2 +1,2 @@
+-PLATFORM_CPPFLAGS += -mlittle-endian -mnorm -mswap -mmpy-option=3 \
++PLATFORM_CPPFLAGS += -mcpu=arcem -mlittle-endian -mnorm -mswap -mmpy-option=3 \
+                      -mbarrel-shifter -mfpu=fpuda_all -mcode-density
+diff --git a/board/synopsys/hsdk/config.mk b/board/synopsys/hsdk/config.mk
+index 9e280f921a..5ae22fa2b7 100644
+--- a/board/synopsys/hsdk/config.mk
++++ b/board/synopsys/hsdk/config.mk
+@@ -2,6 +2,10 @@
+ #
+ # Copyright (C) 2018 Synopsys, Inc. All rights reserved.
+ 
++PLATFORM_CPPFLAGS += -mcpu=hs38_linux -mlittle-endian -matomic -mll64 \
++                     -mdiv-rem -mswap -mnorm -mmpy-option=9 -mbarrel-shifter \
++                     -mfpu=fpud_all
++
+ bsp-generate: u-boot u-boot.bin
+ 	$(Q)python3 $(srctree)/board/$(BOARDDIR)/headerize-hsdk.py \
+ 		--arc-id 0x52 --image $(srctree)/u-boot.bin \
+diff --git a/board/synopsys/iot_devkit/config.mk b/board/synopsys/iot_devkit/config.mk
+index 120733538a..bd8f09ec7a 100644
+--- a/board/synopsys/iot_devkit/config.mk
++++ b/board/synopsys/iot_devkit/config.mk
+@@ -1,2 +1,3 @@
+-PLATFORM_CPPFLAGS += -mlittle-endian -mcode-density -mdiv-rem -mswap -mnorm -mmpy-option=6 -mbarrel-shifter
++PLATFORM_CPPFLAGS += -mcpu=arcem -mlittle-endian -mcode-density -mdiv-rem \
++                     -mswap -mnorm -mmpy-option=6 -mbarrel-shifter
+ LDSCRIPT = $(srctree)/board/synopsys/iot_devkit/u-boot.lds
+diff --git a/configs/nsim_700_defconfig b/configs/nsim_700_defconfig
+index 5633113b09..ca84cb24f0 100644
+--- a/configs/nsim_700_defconfig
++++ b/configs/nsim_700_defconfig
+@@ -1,5 +1,6 @@
+ CONFIG_ARC=y
+ CONFIG_TARGET_NSIM=y
++CONFIG_NSIM_BOARD_CPPFLAGS="-mcpu=arc700 -mlock -mswape"
+ CONFIG_SYS_TEXT_BASE=0x81000000
+ CONFIG_DEBUG_UART_BASE=0xc0fc1000
+ CONFIG_DEBUG_UART_CLOCK=70000000
+diff --git a/configs/nsim_700be_defconfig b/configs/nsim_700be_defconfig
+index 40f7ec7e1f..810cc2a240 100644
+--- a/configs/nsim_700be_defconfig
++++ b/configs/nsim_700be_defconfig
+@@ -1,6 +1,7 @@
+ CONFIG_ARC=y
+ CONFIG_CPU_BIG_ENDIAN=y
+ CONFIG_TARGET_NSIM=y
++CONFIG_NSIM_BOARD_CPPFLAGS="-mcpu=arc700 -mlock -mswape"
+ CONFIG_SYS_TEXT_BASE=0x81000000
+ CONFIG_DEBUG_UART_BASE=0xc0fc1000
+ CONFIG_DEBUG_UART_CLOCK=70000000
+diff --git a/configs/nsim_hs38_defconfig b/configs/nsim_hs38_defconfig
+index 2820a6fca3..66aee049e9 100644
+--- a/configs/nsim_hs38_defconfig
++++ b/configs/nsim_hs38_defconfig
+@@ -1,6 +1,7 @@
+ CONFIG_ARC=y
+ CONFIG_ISA_ARCV2=y
+ CONFIG_TARGET_NSIM=y
++CONFIG_NSIM_BOARD_CPPFLAGS="-mcpu=archs"
+ CONFIG_SYS_TEXT_BASE=0x81000000
+ CONFIG_DEBUG_UART_BASE=0xc0fc1000
+ CONFIG_DEBUG_UART_CLOCK=70000000
+diff --git a/configs/nsim_hs38be_defconfig b/configs/nsim_hs38be_defconfig
+index e533fae2b1..be15c8f069 100644
+--- a/configs/nsim_hs38be_defconfig
++++ b/configs/nsim_hs38be_defconfig
+@@ -2,6 +2,7 @@ CONFIG_ARC=y
+ CONFIG_ISA_ARCV2=y
+ CONFIG_CPU_BIG_ENDIAN=y
+ CONFIG_TARGET_NSIM=y
++CONFIG_NSIM_BOARD_CPPFLAGS="-mcpu=archs"
+ CONFIG_SYS_TEXT_BASE=0x81000000
+ CONFIG_DEBUG_UART_BASE=0xc0fc1000
+ CONFIG_DEBUG_UART_CLOCK=70000000
+-- 
+2.16.2
+

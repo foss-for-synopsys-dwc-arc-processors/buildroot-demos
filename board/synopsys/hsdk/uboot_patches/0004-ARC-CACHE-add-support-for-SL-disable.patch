@@ -1,0 +1,217 @@
+From 1859ae1d4a4e0b448283b356adb0439182b58f96 Mon Sep 17 00:00:00 2001
+From: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+Date: Wed, 11 Mar 2020 15:00:43 +0300
+Subject: [PATCH 04/23] ARC: CACHE: add support for SL$ disable
+
+Since version 3.0 ARC HS supports SL$ (L2 system level cache)
+disable. So add support for SL$ disable/enable to code.
+
+Signed-off-by: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+Signed-off-by: Alexey Brodkin <abrodkin@synopsys.com>
+---
+ arch/arc/include/asm/cache.h |   7 +++
+ arch/arc/lib/cache.c         | 114 ++++++++++++++++++++++++++++++++++++++++---
+ 2 files changed, 114 insertions(+), 7 deletions(-)
+
+diff --git a/arch/arc/include/asm/cache.h b/arch/arc/include/asm/cache.h
+index 0fdcf2d2dd..ab61846b5a 100644
+--- a/arch/arc/include/asm/cache.h
++++ b/arch/arc/include/asm/cache.h
+@@ -40,6 +40,13 @@ static const inline int is_ioc_enabled(void)
+ 	return IS_ENABLED(CONFIG_ARC_DBG_IOC_ENABLE);
+ }
+ 
++/*
++ * We export SLC control functions to use them in platform configuration code.
++ * They maust not be used in any generic code!
++ */
++void slc_enable(void);
++void slc_disable(void);
++
+ #endif /* __ASSEMBLY__ */
+ 
+ #endif /* __ASM_ARC_CACHE_H */
+diff --git a/arch/arc/lib/cache.c b/arch/arc/lib/cache.c
+index 1340776c66..c42723daeb 100644
+--- a/arch/arc/lib/cache.c
++++ b/arch/arc/lib/cache.c
+@@ -89,8 +89,7 @@
+  *
+  * [ NOTE 2 ]:
+  * As of today we only support the following cache configurations on ARC.
+- * Other configurations may exist in HW (for example, since version 3.0 HS
+- * supports SL$ (L2 system level cache) disable) but we don't support it in SW.
++ * Other configurations may exist in HW but we don't support it in SW.
+  * Configuration 1:
+  *        ______________________
+  *       |                      |
+@@ -120,7 +119,8 @@
+  *       |                      |
+  *       |   L2 (SL$)           |
+  *       |______________________|
+- *          always must be on
++ *          always on (ARCv2, HS <  3.0)
++ *          on/off    (ARCv2, HS >= 3.0)
+  *        ___|______________|____
+  *       |                      |
+  *       |   main memory        |
+@@ -178,6 +178,8 @@ DECLARE_GLOBAL_DATA_PTR;
+ 
+ static inlined_cachefunc void __ic_entire_invalidate(void);
+ static inlined_cachefunc void __dc_entire_op(const int cacheop);
++static inlined_cachefunc void __slc_entire_op(const int op);
++static inline bool ioc_enabled(void);
+ 
+ static inline bool pae_exists(void)
+ {
+@@ -238,6 +240,70 @@ static inlined_cachefunc bool slc_exists(void)
+ 	return false;
+ }
+ 
++enum slc_dis_status {
++	ST_SLC_MISSING = 0,
++	ST_SLC_NO_DISABLE_CTRL,
++	ST_SLC_DISABLE_CTRL
++};
++
++/*
++ * ARCv1                                     -> ST_SLC_MISSING
++ * ARCv2 && SLC absent                       -> ST_SLC_MISSING
++ * ARCv2 && SLC exists && SLC version <= 2   -> ST_SLC_NO_DISABLE_CTRL
++ * ARCv2 && SLC exists && SLC version > 2    -> ST_SLC_DISABLE_CTRL
++ */
++static inlined_cachefunc enum slc_dis_status slc_disable_supported(void)
++{
++	if (is_isa_arcv2()) {
++		union bcr_generic sbcr;
++
++		sbcr.word = read_aux_reg(ARC_BCR_SLC);
++		if (sbcr.fields.ver == 0)
++			return ST_SLC_MISSING;
++		else if (sbcr.fields.ver <= 2)
++			return ST_SLC_NO_DISABLE_CTRL;
++		else
++			return ST_SLC_DISABLE_CTRL;
++	}
++
++	return ST_SLC_MISSING;
++}
++
++static inlined_cachefunc bool __slc_enabled(void)
++{
++	return !(read_aux_reg(ARC_AUX_SLC_CTRL) & SLC_CTRL_DIS);
++}
++
++static inlined_cachefunc void __slc_enable(void)
++{
++	unsigned int ctrl;
++
++	ctrl = read_aux_reg(ARC_AUX_SLC_CTRL);
++	ctrl &= ~SLC_CTRL_DIS;
++	write_aux_reg(ARC_AUX_SLC_CTRL, ctrl);
++}
++
++static inlined_cachefunc void __slc_disable(void)
++{
++	unsigned int ctrl;
++
++	ctrl = read_aux_reg(ARC_AUX_SLC_CTRL);
++	ctrl |= SLC_CTRL_DIS;
++	write_aux_reg(ARC_AUX_SLC_CTRL, ctrl);
++}
++
++static inlined_cachefunc bool slc_enabled(void)
++{
++	enum slc_dis_status slc_status = slc_disable_supported();
++
++	if (slc_status == ST_SLC_MISSING)
++		return false;
++	else if (slc_status == ST_SLC_NO_DISABLE_CTRL)
++		return true;
++	else
++		return __slc_enabled();
++}
++
+ static inlined_cachefunc bool slc_data_bypass(void)
+ {
+ 	/*
+@@ -247,6 +313,39 @@ static inlined_cachefunc bool slc_data_bypass(void)
+ 	return !dcache_enabled();
+ }
+ 
++void slc_enable(void)
++{
++	if (slc_disable_supported() != ST_SLC_DISABLE_CTRL)
++		return;
++
++	if (__slc_enabled())
++		return;
++
++	__slc_enable();
++}
++
++/* TODO: warn if we are not able to disable SLC */
++void slc_disable(void)
++{
++	if (slc_disable_supported() != ST_SLC_DISABLE_CTRL)
++		return;
++
++	/* we don't support SLC disabling if we use IOC */
++	if (ioc_enabled())
++		return;
++
++	if (!__slc_enabled())
++		return;
++
++	/*
++	 * We need to flush L1D$ to guarantee that we won't have any
++	 * writeback operations during SLC disabling.
++	 */
++	__dc_entire_op(OP_FLUSH);
++	__slc_entire_op(OP_FLUSH_N_INV);
++	__slc_disable();
++}
++
+ static inline bool ioc_exists(void)
+ {
+ 	if (is_isa_arcv2()) {
+@@ -275,7 +374,7 @@ static inlined_cachefunc void __slc_entire_op(const int op)
+ {
+ 	unsigned int ctrl;
+ 
+-	if (!slc_exists())
++	if (!slc_enabled())
+ 		return;
+ 
+ 	ctrl = read_aux_reg(ARC_AUX_SLC_CTRL);
+@@ -324,7 +423,7 @@ static void __slc_rgn_op(unsigned long paddr, unsigned long sz, const int op)
+ 	unsigned int ctrl;
+ 	unsigned long end;
+ 
+-	if (!slc_exists())
++	if (!slc_enabled())
+ 		return;
+ 
+ 	/*
+@@ -382,6 +481,9 @@ static void arc_ioc_setup(void)
+ 	if (!slc_exists())
+ 		panic("Try to enable IOC but SLC is not present");
+ 
++	if (!slc_enabled())
++		panic("Try to enable IOC but SLC is disabled");
++
+ 	/* Unsupported configuration. See [ NOTE 2 ] for more details. */
+ 	if (!dcache_enabled())
+ 		panic("Try to enable IOC but L1 D$ is disabled");
+@@ -517,8 +619,6 @@ void invalidate_icache_all(void)
+ 	/*
+ 	 * If SL$ is bypassed for data it is used only for instructions,
+ 	 * so we need to invalidate it too.
+-	 * TODO: HS 3.0 supports SLC disable so we need to check slc
+-	 * enable/disable status here.
+ 	 */
+ 	if (is_isa_arcv2() && slc_data_bypass())
+ 		__slc_entire_op(OP_INV);
+-- 
+2.16.2
+

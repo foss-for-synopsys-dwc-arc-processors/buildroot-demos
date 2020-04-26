@@ -1,0 +1,64 @@
+From e01340500e7fecdd5c690ef379a126b70a03abfd Mon Sep 17 00:00:00 2001
+From: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+Date: Wed, 22 Apr 2020 01:57:41 +0300
+Subject: [PATCH 14/23] ARC: HSDK-4xD: fix headerize script for HSDK-4xD
+ compatibility
+
+ARC HS CPU in HSDK-4xD has ARC ID = 0x54, so fix headerize script
+accordingly.
+
+Signed-off-by: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+---
+ board/synopsys/hsdk/config.mk         | 12 ++++++++++--
+ board/synopsys/hsdk/headerize-hsdk.py |  2 +-
+ 2 files changed, 11 insertions(+), 3 deletions(-)
+
+diff --git a/board/synopsys/hsdk/config.mk b/board/synopsys/hsdk/config.mk
+index 1d01ef5037..def944aad2 100644
+--- a/board/synopsys/hsdk/config.mk
++++ b/board/synopsys/hsdk/config.mk
+@@ -6,18 +6,26 @@ ifdef CONFIG_BOARD_HSDK
+ PLATFORM_CPPFLAGS += -mcpu=hs38_linux -mlittle-endian -matomic -mll64 \
+                      -mdiv-rem -mswap -mnorm -mmpy-option=9 -mbarrel-shifter \
+                      -mfpu=fpud_all
++
++bsp-generate: u-boot u-boot.bin
++	$(Q)python3 $(srctree)/board/$(BOARDDIR)/headerize-hsdk.py \
++		--arc-id 0x52 --image $(srctree)/u-boot.bin \
++		--elf $(srctree)/u-boot
++	$(Q)tools/mkimage -T script -C none -n 'uboot update script' \
++		-d $(srctree)/u-boot-update.txt \
++		$(srctree)/u-boot-update.scr &> /dev/null
+ endif
+ 
+ ifdef CONFIG_BOARD_HSDK_4XD
+ PLATFORM_CPPFLAGS += -mcpu=hs4x_rel31 -mlittle-endian -matomic -mll64 \
+                      -mdiv-rem -mswap -mnorm -mmpy-option=9 -mbarrel-shifter \
+                      -mfpu=fpud_all
+-endif
+ 
+ bsp-generate: u-boot u-boot.bin
+ 	$(Q)python3 $(srctree)/board/$(BOARDDIR)/headerize-hsdk.py \
+-		--arc-id 0x52 --image $(srctree)/u-boot.bin \
++		--arc-id 0x54 --image $(srctree)/u-boot.bin \
+ 		--elf $(srctree)/u-boot
+ 	$(Q)tools/mkimage -T script -C none -n 'uboot update script' \
+ 		-d $(srctree)/u-boot-update.txt \
+ 		$(srctree)/u-boot-update.scr &> /dev/null
++endif
+diff --git a/board/synopsys/hsdk/headerize-hsdk.py b/board/synopsys/hsdk/headerize-hsdk.py
+index fce749723e..7b047cf4a3 100644
+--- a/board/synopsys/hsdk/headerize-hsdk.py
++++ b/board/synopsys/hsdk/headerize-hsdk.py
+@@ -27,7 +27,7 @@ def calc_check_sum(filename):
+ 
+ 
+ def arg_verify(uboot_bin_filename, uboot_elf_filename, arc_id):
+-    if arc_id not in [0x52, 0x53]:
++    if arc_id not in [0x52, 0x53, 0x54]:
+         print("unknown ARC ID: " + hex(arc_id))
+         sys.exit(2)
+ 
+-- 
+2.16.2
+

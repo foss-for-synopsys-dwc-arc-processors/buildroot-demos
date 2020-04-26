@@ -1,0 +1,31 @@
+From 7746e6e6eeeeeb34fb38951addef0225d57c3f4c Mon Sep 17 00:00:00 2001
+From: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+Date: Wed, 29 Jan 2020 15:48:47 +0300
+Subject: [PATCH 23/23] BDINFO: ARC: print info about relocations
+
+Print relocation information in bdinfo.
+NOTE: this patch changes only ARC part of bdinfo code.
+
+Signed-off-by: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+---
+ cmd/bdinfo.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/cmd/bdinfo.c b/cmd/bdinfo.c
+index abd9151432..fb19ea6a35 100644
+--- a/cmd/bdinfo.c
++++ b/cmd/bdinfo.c
+@@ -443,6 +443,10 @@ int do_bdinfo(cmd_tbl_t *cmdtp, int flag, int argc, char * const argv[])
+ 	bd_t *bd = gd->bd;
+ 
+ 	print_bi_mem(bd);
++	if (!(gd->flags & GD_FLG_SKIP_RELOC)) {
++		print_num("relocaddr", gd->relocaddr);
++		print_num("reloc off", gd->reloc_off);
++	}
+ 	print_eth_ip_addr();
+ 	print_baudrate();
+ 
+-- 
+2.16.2
+

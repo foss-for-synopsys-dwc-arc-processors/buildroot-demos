@@ -1,0 +1,63 @@
+From 66ca44c6183be39c939b98dfc123731aca5c28f1 Mon Sep 17 00:00:00 2001
+From: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+Date: Wed, 22 Apr 2020 18:33:21 +0300
+Subject: [PATCH 09/23] ARC: ARCv2: handle DSP presence in HW
+
+In case of DSP extension presence in HW some instructions
+(related to integer multiply, multiply-accumulate, and divide
+operation) executes on this DSP execution unit. So their
+execution will depend on dsp configuration register (DSP_CTRL)
+As we want these instructions to execute the same way regardless
+of DSP presence we need to set DSP_CTRL properly.
+
+NOTE:
+we do the same adjustments in Linux kernel, see in kernel tree:
+commit 4827d0cf744e ("ARC: handle DSP presence in HW")
+
+Signed-off-by: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+---
+ arch/arc/include/asm/arcregs.h |  1 +
+ arch/arc/lib/start.S           | 15 +++++++++++++++
+ 2 files changed, 16 insertions(+)
+
+diff --git a/arch/arc/include/asm/arcregs.h b/arch/arc/include/asm/arcregs.h
+index fff6591c68..f3cd4a889a 100644
+--- a/arch/arc/include/asm/arcregs.h
++++ b/arch/arc/include/asm/arcregs.h
+@@ -100,6 +100,7 @@
+ 
+ /* DSP-extensions related auxiliary registers */
+ #define ARC_AUX_DSP_BUILD	0x7A
++#define ARC_AUX_DSP_CTRL	0x59F
+ 
+ /* ARC Subsystems related auxiliary registers */
+ #define ARC_AUX_SUBSYS_BUILD	0xF0
+diff --git a/arch/arc/lib/start.S b/arch/arc/lib/start.S
+index 8c744f5be7..016ae85be2 100644
+--- a/arch/arc/lib/start.S
++++ b/arch/arc/lib/start.S
+@@ -61,6 +61,21 @@ ENTRY(_start)
+ 1:
+ #endif
+ 
++#ifdef CONFIG_ISA_ARCV2
++	; In case of DSP extension presence in HW some instructions
++	; (related to integer multiply, multiply-accumulate, and divide
++	; operation) executes on this DSP execution unit. So their
++	; execution will depend on dsp configuration register (DSP_CTRL)
++	; As we want these instructions to execute the same way regardless
++	; of DSP presence we need to set DSP_CTRL properly.
++	lr	r5, [ARC_AUX_DSP_BUILD]
++	bmsk	r5, r5, 7
++	breq    r5, 0, 1f
++	mov	r5, 0
++	sr	r5, [ARC_AUX_DSP_CTRL]
++1:
++#endif
++
+ #ifdef __ARC_UNALIGNED__
+ 	/*
+ 	 * Enable handling of unaligned access in the CPU as by default
+-- 
+2.16.2
+

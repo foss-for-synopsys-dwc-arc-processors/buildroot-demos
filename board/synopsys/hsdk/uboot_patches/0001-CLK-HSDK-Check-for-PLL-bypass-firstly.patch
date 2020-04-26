@@ -1,0 +1,39 @@
+From 9856065ef55811877af4c171d2338c0f0b1c1d20 Mon Sep 17 00:00:00 2001
+From: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+Date: Wed, 29 Jan 2020 14:08:29 +0300
+Subject: [PATCH 01/23] CLK: HSDK: Check for PLL bypass firstly
+
+Pll bypass has priority over enable/disable.
+
+Signed-off-by: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+Signed-off-by: Alexey Brodkin <abrodkin@synopsys.com>
+---
+ drivers/clk/clk-hsdk-cgu.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/clk/clk-hsdk-cgu.c b/drivers/clk/clk-hsdk-cgu.c
+index 56ef08c032..69e6b24b66 100644
+--- a/drivers/clk/clk-hsdk-cgu.c
++++ b/drivers/clk/clk-hsdk-cgu.c
+@@ -377,14 +377,14 @@ static ulong pll_get(struct clk *sclk)
+ 
+ 	pr_debug("current configurarion: %#x\n", val);
+ 
+-	/* Check if PLL is disabled */
+-	if (val & CGU_PLL_CTRL_PD)
+-		return 0;
+-
+ 	/* Check if PLL is bypassed */
+ 	if (val & CGU_PLL_CTRL_BYPASS)
+ 		return PARENT_RATE;
+ 
++	/* Check if PLL is disabled */
++	if (val & CGU_PLL_CTRL_PD)
++		return 0;
++
+ 	/* input divider = reg.idiv + 1 */
+ 	idiv = 1 + ((val & CGU_PLL_CTRL_IDIV_MASK) >> CGU_PLL_CTRL_IDIV_SHIFT);
+ 	/* fb divider = 2*(reg.fbdiv + 1) */
+-- 
+2.16.2
+

@@ -1,0 +1,76 @@
+From 58e7519e77322aaded1c7d1eeece5e909ebe61b4 Mon Sep 17 00:00:00 2001
+From: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+Date: Mon, 23 Mar 2020 20:46:35 +0300
+Subject: [PATCH 18/23] ARC: HSDK-4xD: add support for SLC enable/disable
+
+Add support for SLC enable/disable via hsdk_init command.
+
+Signed-off-by: Eugeniy Paltsev <Eugeniy.Paltsev@synopsys.com>
+---
+ board/synopsys/hsdk/hsdk.c | 22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+
+diff --git a/board/synopsys/hsdk/hsdk.c b/board/synopsys/hsdk/hsdk.c
+index b8b995db47..b25b133187 100644
+--- a/board/synopsys/hsdk/hsdk.c
++++ b/board/synopsys/hsdk/hsdk.c
+@@ -80,6 +80,7 @@ struct hsdk_env_common_ctl {
+ 	u32_env nvlim;
+ 	u32_env icache;
+ 	u32_env dcache;
++	u32_env l2_cache;
+ };
+ 
+ /*
+@@ -129,6 +130,9 @@ static const struct env_map_common env_map_common[] = {
+ 	{ "non_volatile_limit", ENV_HEX, true, 0, 0xF,	&env_common.nvlim },
+ 	{ "icache_ena",	ENV_HEX, true,	0, 1,		&env_common.icache },
+ 	{ "dcache_ena",	ENV_HEX, true,	0, 1,		&env_common.dcache },
++#if defined(CONFIG_BOARD_HSDK_4XD)
++	{ "l2_cache_ena",	ENV_HEX, true,	0, 1,		&env_common.l2_cache },
++#endif /* CONFIG_BOARD_HSDK_4XD */
+ 	{}
+ };
+ 
+@@ -188,6 +192,11 @@ static bool is_board_match_runtime(enum board_type type_req)
+ 	return get_board_type_runtime() == type_req;
+ }
+ 
++static bool is_board_match_config(enum board_type type_req)
++{
++	return get_board_type_config() == type_req;
++}
++
+ static const char * board_name(enum board_type type)
+ {
+ 	switch (type) {
+@@ -278,6 +287,18 @@ static void init_cluster_nvlim(void)
+ 	flush_n_invalidate_dcache_all();
+ }
+ 
++static void init_cluster_slc(void)
++{
++	/* ARC HS38 doesn't support SLC disabling */
++	if (!is_board_match_config(T_BOARD_HSDK_4XD))
++		return;
++
++	if (env_common.l2_cache.val)
++		slc_enable();
++	else
++		slc_disable();
++}
++
+ static void init_master_icache(void)
+ {
+ 	if (icache_status()) {
+@@ -657,6 +678,7 @@ static void do_init_cluster(void)
+ 	 * cores.
+ 	 */
+ 	init_cluster_nvlim();
++	init_cluster_slc();
+ }
+ 
+ static int check_master_cpu_id(void)
+-- 
+2.16.2
+
